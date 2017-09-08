@@ -4,6 +4,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 
 import java.util.Iterator;
@@ -23,29 +24,56 @@ public class HomeAgent extends Agent {
 	
 	private int acceptableSellMax = 0;
 	private int acceptableSellMin = 0;
-	
+
+	private TickerBehaviour counter;
+
+	public void activateCounter()
+	{
+		System.out.println(getLocalName() + ": I have been asked to start counting");
+		counter = new TickerBehaviour(this, 500) {
+			public void onStart()
+			{
+				super.onStart();
+				System.out.println(getLocalName()+ ": Start counting");
+			}
+			@Override
+			protected void onTick()
+			{
+				System.out.println(getLocalName() + ": Counter : " + getTickCount());
+				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+				msg.setContent("Send");
+				msg.addReceiver(new AID("APP",AID.ISLOCALNAME));
+				Iterator receivers = msg.getAllIntendedReceiver();
+				System.out.println(getLocalName() + ": Sending messages");
+				while(receivers.hasNext())
+				{
+					System.out.println(getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+				}
+				send(msg);
+				if (getTickCount() >= 5)
+					deactivateCounter();
+			}
+			public int onEnd() {
+				System.out.println(getLocalName() + ": Stop counting");
+				return super.onEnd();
+			}
+		};
+		addBehaviour(counter);
+	}
+
+	public void deactivateCounter()
+	{
+		System.out.println(getLocalName() + ": I have been asked to stop counting");
+		counter.stop(); // stopping the ticker behaviour
+	}
+
 	@Override
 	protected void setup()
 	{
-		addBehaviour(new CyclicBehaviour()
-		{
-			@Override
-			public void action()
-			{
-				//Send a message to the other agent
+		System.out.println(getLocalName() + ": I have been created");
+		activateCounter();
+		
 
-			}
-		});
 
-		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setContent("Send");
-		msg.addReceiver(new AID("APP",AID.ISLOCALNAME));
-		Iterator receivers = msg.getAllIntendedReceiver();
-		System.out.println("Sending message");
-		while(receivers.hasNext())
-		{
-			System.out.println("Sending to : " +((AID)receivers.next()).getLocalName());
-		}
-		send(msg);
 	}
 }
