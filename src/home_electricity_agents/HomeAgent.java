@@ -11,7 +11,7 @@ import java.util.Iterator;
 
 public class HomeAgent extends Agent {
 	//Knows how much electricity it has
-	private int electricity = 0;
+	private int electricity = 100; //TEMP TEST
 	
 	//Knows the range of which the agent wants to be in
 	private int maxElect = 0;
@@ -39,17 +39,8 @@ public class HomeAgent extends Agent {
 			@Override
 			protected void onTick()
 			{
-				System.out.println(getLocalName() + ": Counter : " + getTickCount());
-				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.setContent("Send");
-				msg.addReceiver(new AID("APP",AID.ISLOCALNAME));
-				Iterator receivers = msg.getAllIntendedReceiver();
-				System.out.println(getLocalName() + ": Sending messages");
-				while(receivers.hasNext())
-				{
-					System.out.println(getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
-				}
-				send(msg);
+				System.out.println("\n" + getLocalName() + ": Counter : " + getTickCount());
+				sendMessagesCost();
 				if (getTickCount() >= 5)
 					deactivateCounter();
 			}
@@ -61,10 +52,45 @@ public class HomeAgent extends Agent {
 		addBehaviour(counter);
 	}
 
+	private void sendMessagesCost()
+	{
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.setContent("cost");
+		msg.addReceiver(new AID("APP1",AID.ISLOCALNAME));
+		msg.addReceiver(new AID("APP2",AID.ISLOCALNAME));
+		Iterator receivers = msg.getAllIntendedReceiver();
+		System.out.println(getLocalName() + ": Sending messages");
+		while(receivers.hasNext())
+		{
+			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+		}
+		send(msg);
+	}
+
 	public void deactivateCounter()
 	{
 		System.out.println(getLocalName() + ": I have been asked to stop counting");
 		counter.stop(); // stopping the ticker behaviour
+	}
+
+	public void getReply()
+	{
+		addBehaviour(new CyclicBehaviour(this) {
+			@Override
+			public void action() {
+				//Receive the other agents message
+				ACLMessage msg=receive();
+				if (msg != null)
+				{
+					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+					//May have to include try statement here
+					electricity -= Integer.parseInt(msg.getContent());
+					System.out.println(getLocalName()+ ": I have " + Integer.toString(electricity) + " left");
+				}
+				else
+					block();
+			}
+		});
 	}
 
 	@Override
@@ -72,7 +98,7 @@ public class HomeAgent extends Agent {
 	{
 		System.out.println(getLocalName() + ": I have been created");
 		activateCounter();
-		
+		getReply();
 
 
 	}
