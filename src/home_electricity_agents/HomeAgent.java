@@ -1,7 +1,6 @@
 package home_electricity_agents;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import jade.Boot;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
