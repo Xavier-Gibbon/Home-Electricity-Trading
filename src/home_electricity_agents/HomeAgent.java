@@ -17,4 +17,6 @@ public class HomeAgent extends Agent {
 	
 	private int acceptableSellMax = 0;
 	private int acceptableSellMin = 0;
+	
+	
 }
