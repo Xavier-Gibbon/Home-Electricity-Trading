@@ -144,7 +144,7 @@ public class HomeAgent extends Agent {
 					}
 					else if(msg.getContent().contains("C")) //Appliance Reply
 					{*/
-					electricity -= Integer.parseInt(msg.getContent());
+					electricity += Integer.parseInt(msg.getContent());
 					System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
 					if (messageCount == 0)
 						buySellElectricity();
