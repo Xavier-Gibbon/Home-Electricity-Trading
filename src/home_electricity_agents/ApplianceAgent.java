@@ -8,8 +8,6 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
-import javax.swing.*;
-
 public class ApplianceAgent extends Agent {
 	//How much electricity the appliance consumes
 	//And how varied the consumption can be
