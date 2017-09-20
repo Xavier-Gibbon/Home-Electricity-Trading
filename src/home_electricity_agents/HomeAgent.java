@@ -61,9 +61,11 @@ public class HomeAgent extends Agent {
 	private void sendMessagesCost() //Send the ping to the appliances, asking them for their cost
 	{
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setContent("cost");
-		msg.addReceiver(new AID("APP1",AID.ISLOCALNAME));
-		msg.addReceiver(new AID("APP2",AID.ISLOCALNAME));
+		msg.setContent("cost");		
+		DFAgentDescription[] serviceAgents = getTarget("Appliance");
+		for (DFAgentDescription serviceAgent : serviceAgents) {
+			msg.addReceiver(serviceAgent.getName());
+		}
 		Iterator receivers = msg.getAllIntendedReceiver();
 		System.out.println(getLocalName() + ": Sending messages");
 		while(receivers.hasNext())
@@ -73,13 +75,28 @@ public class HomeAgent extends Agent {
 		}
 		send(msg);
 	}
+	
+	private DFAgentDescription[] getTarget(String service)
+	{
+		DFAgentDescription dfd = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType(service);
+		dfd.addServices(sd);
+		try {
+			DFAgentDescription[] result = DFService.search(this, dfd);
+			return result;
+		} catch (Exception fe) {
+		}
+		return null;
+	}
 
 	private void sendVendorMessage(Boolean BuySell) //Send the message to the vendors
 	{
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.addReceiver(new AID("VENDOR1",AID.ISLOCALNAME));
-		msg.addReceiver(new AID("VENDOR2",AID.ISLOCALNAME));
-		msg.addReceiver(new AID("VENDOR3",AID.ISLOCALNAME));
+		DFAgentDescription[] serviceAgents = getTarget("Vendor");
+		for (DFAgentDescription serviceAgent : serviceAgents) {
+			msg.addReceiver(serviceAgent.getName());
+		}
 		if (BuySell) //Buy electricity
 		{
 			msg.setContent("B" + Integer.toString(electricity));
