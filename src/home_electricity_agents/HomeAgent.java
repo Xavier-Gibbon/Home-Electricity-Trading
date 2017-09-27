@@ -128,21 +128,25 @@ public class HomeAgent extends Agent {
 				if (msg != null)
 				{
 					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
-					//msg.getSender().get
-					//{
+					
+					Integer messageData  = Integer.parseInt(msg.getContent().substring(1));
+					switch (msg.getContent().charAt(0))
+                    {
+                        case 'A': //From an appliance
+                            electricity += messageData;
+                            System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
+                            break;
+                        case 'S': //From a vendor
 
-					//}
-					/*=======================================================================
-						TODO: Find out way to find out where a message came from without parsing the text as I've done
-						TODO: This may require finding the type of the sender or something along those lines
-					 ========================================================================*/
-					/*if(msg.getContent().contains("S")) //Vendor Selling Reply
-					{
+                            break;
+                        case 'B': //From a vendor
 
-					}
-					else if(msg.getContent().contains("C")) //Appliance Reply
-					{*/
-					electricity += Integer.parseInt(msg.getContent());
+                            break;
+                        default:
+
+                            break;
+                    }
+					
 					System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
 					if (messageCount == 0)
 						buySellElectricity();

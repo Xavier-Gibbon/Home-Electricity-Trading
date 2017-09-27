@@ -53,7 +53,8 @@ public class ApplianceAgent extends Agent {
 					{
 						ACLMessage reply = msg.createReply();
 						reply.setPerformative(ACLMessage.INFORM);
-						reply.setContent(this.GetConsumption());
+						
+						reply.setContent("A" + this.GetConsumption());
 						System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getAllReceiver().next());
 						send(reply);
 					}
