@@ -1,6 +1,4 @@
 package home_electricity_agents;
-
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;

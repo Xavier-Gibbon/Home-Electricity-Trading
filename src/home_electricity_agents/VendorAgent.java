@@ -1,5 +1,4 @@
 package home_electricity_agents;
-
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
@@ -7,6 +6,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
+import java.util.Random;
+
 
 public class VendorAgent extends Agent {
 	//Knows how much energy it can sell
@@ -79,5 +80,21 @@ public class VendorAgent extends Agent {
 					block();
 			}
 		});
+	}
+	//Increments the electricity
+	private void IncrementElectricity()
+	{
+		electricity += electIncrement;
+	}
+	
+	//Creates an offer, based on the given minimum and maximum values
+	public String GetOffer(int min, int max)
+	{
+		int difference = max - min;
+		Random theRandom = new Random();
+		
+		String offer = Integer.toString(min + theRandom.nextInt(difference));
+		
+		return offer;
 	}
 }
