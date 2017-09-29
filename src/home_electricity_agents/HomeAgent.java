@@ -18,6 +18,12 @@ public class HomeAgent extends Agent {
 	//Knows the range of which the agent wants to be in
 	private int maxElect = 0;
 	private int minElect = 0;
+
+	private int vendorReplyCount = 3;
+	private int lowestVendorCost = 99999;
+	private AID vendorName;
+
+	private int applianceMessageCount = 0;
 	
 	//Knows the acceptable price range for buying and selling electricity
 	//This will be price per energy
@@ -67,7 +73,8 @@ public class HomeAgent extends Agent {
 		System.out.println(getLocalName() + ": Sending messages");
 		while(receivers.hasNext())
 		{
-			messageCount++;
+			//messageCount++;
+			applianceMessageCount++;
 			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
 		send(msg);
@@ -94,16 +101,16 @@ public class HomeAgent extends Agent {
 		for (DFAgentDescription serviceAgent : serviceAgents) {
 			msg.addReceiver(serviceAgent.getName());
 		}
-		if (BuySell) //Buy electricity
-		{
-			msg.setContent("B" + Integer.toString(electricity));
-		}
-		else //Sell electricity
-		{
-			msg.setContent("S" + Integer.toString(electricity));
-		}
+	//	if (BuySell) //Buy electricity
+	//	{
+		msg.setContent("B" + Integer.toString(electricity));
+	//	}
+	//	else //Sell electricity
+	//	{
+	//		msg.setContent("S" + Integer.toString(electricity));
+		//}
 		Iterator receivers = msg.getAllIntendedReceiver();
-		System.out.println(getLocalName() + ": Sending messages to Vendors");
+		System.out.println(getLocalName() + ": Sending messages to Vendors : " + msg.getContent());
 		while(receivers.hasNext())
 		{
 			messageCount++;
@@ -128,16 +135,58 @@ public class HomeAgent extends Agent {
 				if (msg != null)
 				{
 					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
-					
+
 					Integer messageData  = Integer.parseInt(msg.getContent().substring(1));
 					switch (msg.getContent().charAt(0))
                     {
                         case 'A': //From an appliance
-                            electricity += messageData;
-                            System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
-                            break;
-                        case 'S': //From a vendor
 
+							applianceMessageCount--;
+                            electricity += messageData;
+							if (applianceMessageCount <= 0)
+							{
+								System.out.println("=======================BUYING ELECTRICITY====================");
+								System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
+								buySellElectricity();
+
+							}
+                            break;
+						case 'I': //From a vendor
+							ACLMessage replyBarter = msg.createReply();
+							replyBarter.setPerformative(ACLMessage.INFORM);
+							replyBarter.setContent("L");
+							System.out.println("\t" + getLocalName() + ": Sending response " + replyBarter.getContent() + " to " + msg.getSender().getLocalName());
+
+							send(replyBarter);
+
+							System.out.println("VENDOR REPLY COUNT: " + vendorReplyCount);
+							//vendorReplyCount--;
+
+							if (messageData < lowestVendorCost)
+							{
+								lowestVendorCost = messageData;
+								vendorName = msg.getSender();
+							}
+							if (vendorReplyCount <= 0 )
+							{
+								//chooseVendor();
+								vendorReplyCount = 3;
+								lowestVendorCost = 999;
+							}
+							break;
+                        case 'R': //From a vendor
+							vendorReplyCount--;
+							if (messageData < lowestVendorCost)
+							{
+								lowestVendorCost = messageData;
+								vendorName = msg.getSender();
+							}
+							if (vendorReplyCount <= 0 )
+							{
+								chooseVendor();
+								vendorReplyCount = 3;
+								lowestVendorCost = 999;
+							}
                             break;
                         case 'B': //From a vendor
 
@@ -146,12 +195,19 @@ public class HomeAgent extends Agent {
 
                             break;
                     }
-					
-					System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
-					if (messageCount == 0)
-						buySellElectricity();
+
+					//System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
+					//messageCount--;
+					//if (messageCount == 0)
+					//{
+						//System.out.println("0 MESSAGES");
+						//buySellElectricity();
+						//chooseVendor();
 					//}
-					messageCount--;
+					//System.out.println("Message count: " + messageCount);
+
+					//}
+
 					//May have to include try statement here
 				}
 				else
@@ -160,6 +216,23 @@ public class HomeAgent extends Agent {
 				//	getReply();
 			}
 		});
+	}
+
+
+	private void chooseVendor()
+	{
+		System.out.println("-------------------Choosing Vendor------------------");
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.addReceiver(vendorName);
+		msg.setContent("Y"+Integer.toString(electricity));
+		Iterator receivers = msg.getAllIntendedReceiver();
+		while(receivers.hasNext())
+		{
+			messageCount++;
+			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+		}
+		send(msg);
+		//messageCount++;
 	}
 
 	private void buySellElectricity() //Buy or sell electricity based on the amount of electricity we require
