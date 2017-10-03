@@ -65,7 +65,7 @@ public class SettingsWindow extends JFrame {
 		JButton btnBack = new JButton("Back");
 		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Application.GetApplication().terminate();
+				dispose();
 			}
 		});
 		btnBack.setBounds(585, 367, 89, 23);
