@@ -74,12 +74,17 @@ public class MainMenu {
 		});
 		
 		btnSettings.setFont(new Font("Tahoma", Font.PLAIN, 18));
-		btnSettings.setBounds(432, 284, 182, 49);
+		btnSettings.setBounds(481, 284, 130, 49);
 		frame.getContentPane().add(btnSettings);
 		
 		JButton btnBuy = new JButton("Buy");
 		btnBuy.setFont(new Font("Tahoma", Font.PLAIN, 18));
-		btnBuy.setBounds(73, 284, 182, 49);
+		btnBuy.setBounds(73, 284, 130, 49);
 		frame.getContentPane().add(btnBuy);
+		
+		JButton btnSell = new JButton("Sell");
+		btnSell.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		btnSell.setBounds(277, 284, 130, 49);
+		frame.getContentPane().add(btnSell);
 	}
 }

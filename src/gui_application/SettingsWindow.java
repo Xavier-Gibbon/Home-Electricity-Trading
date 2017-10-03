@@ -18,11 +18,13 @@ import javax.swing.border.BevelBorder;
 import java.awt.Font;
 import javax.swing.JTextField;
 import javax.swing.JCheckBox;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JScrollPane;
 
 public class SettingsWindow extends JFrame {
 
 	private JPanel contentPane;
-	private JTable table;
+	private JTable tblApplianceList;
 	private JTextField txtMinBuyRange;
 	private JTextField txtMaxBuyRange;
 	private JTextField txtMinSellRange;
@@ -73,11 +75,6 @@ public class SettingsWindow extends JFrame {
 		lblAppliance.setFont(new Font("Tahoma", Font.BOLD, 18));
 		lblAppliance.setBounds(10, 11, 198, 33);
 		contentPane.add(lblAppliance);
-		
-		table = new JTable();
-		table.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		table.setBounds(10, 55, 198, 147);
-		contentPane.add(table);
 		
 		JButton btnSave = new JButton("Save");
 		btnSave.setBounds(585, 333, 89, 23);
@@ -214,5 +211,44 @@ public class SettingsWindow extends JFrame {
 		chkAutomaticTrading.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		chkAutomaticTrading.setBounds(272, 275, 181, 23);
 		contentPane.add(chkAutomaticTrading);
+		
+		JScrollPane scrlPneApplianceList = new JScrollPane();
+		scrlPneApplianceList.setBounds(20, 55, 181, 173);
+		contentPane.add(scrlPneApplianceList);
+		
+		tblApplianceList = new JTable();
+		scrlPneApplianceList.setViewportView(tblApplianceList);
+		tblApplianceList.setModel(new DefaultTableModel(
+			new Object[][] {
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+			},
+			new String[] {
+				"Appliance Name", "Enabled?"
+			}
+		) {
+			Class[] columnTypes = new Class[] {
+				String.class, Boolean.class
+			};
+			public Class getColumnClass(int columnIndex) {
+				return columnTypes[columnIndex];
+			}
+		});
+		tblApplianceList.getColumnModel().getColumn(0).setPreferredWidth(92);
+		tblApplianceList.getColumnModel().getColumn(1).setPreferredWidth(65);
+		tblApplianceList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 	}
 }
