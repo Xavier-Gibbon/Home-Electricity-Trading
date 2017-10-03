@@ -10,6 +10,7 @@ import javax.swing.SwingConstants;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JTable;
 
 public class MainMenu {
 
@@ -53,6 +54,7 @@ public class MainMenu {
 		lblTitle.setBounds(159, 11, 366, 90);
 		frame.getContentPane().add(lblTitle);
 		
+		//Exit button functionality
 		JButton btnExit = new JButton("Exit");
 		btnExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -62,7 +64,15 @@ public class MainMenu {
 		btnExit.setBounds(585, 367, 89, 23);
 		frame.getContentPane().add(btnExit);
 		
+		//Settings button functionality
 		JButton btnSettings = new JButton("Settings");
+		btnSettings.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				SettingsWindow theWindow = new SettingsWindow();
+				theWindow.setVisible(true);
+			}
+		});
+		
 		btnSettings.setFont(new Font("Tahoma", Font.PLAIN, 18));
 		btnSettings.setBounds(432, 284, 182, 49);
 		frame.getContentPane().add(btnSettings);
