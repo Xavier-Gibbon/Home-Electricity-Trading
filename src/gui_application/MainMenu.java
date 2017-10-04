@@ -11,10 +11,13 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JTable;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 
 public class MainMenu {
 
 	private JFrame frame;
+	private JTextField txtConsole;
 
 	/**
 	 * Launch the application.
@@ -43,11 +46,13 @@ public class MainMenu {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		//Frame Initialization
 		frame = new JFrame();
 		frame.setBounds(100, 100, 700, 440);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		
+		//The code for the title
 		JLabel lblTitle = new JLabel("Home Electricity Agent");
 		lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTitle.setFont(new Font("Tahoma", Font.BOLD, 24));
@@ -58,7 +63,7 @@ public class MainMenu {
 		JButton btnExit = new JButton("Exit");
 		btnExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				System.exit(0);
+				frame.dispose();
 			}
 		});
 		btnExit.setBounds(585, 367, 89, 23);
@@ -77,14 +82,24 @@ public class MainMenu {
 		btnSettings.setBounds(481, 284, 130, 49);
 		frame.getContentPane().add(btnSettings);
 		
+		//Buy button functionality
 		JButton btnBuy = new JButton("Buy");
 		btnBuy.setFont(new Font("Tahoma", Font.PLAIN, 18));
 		btnBuy.setBounds(73, 284, 130, 49);
 		frame.getContentPane().add(btnBuy);
 		
+		//Sell button functionality
 		JButton btnSell = new JButton("Sell");
 		btnSell.setFont(new Font("Tahoma", Font.PLAIN, 18));
 		btnSell.setBounds(277, 284, 130, 49);
 		frame.getContentPane().add(btnSell);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(72, 98, 539, 151);
+		frame.getContentPane().add(scrollPane);
+		
+		txtConsole = new JTextField();
+		scrollPane.setViewportView(txtConsole);
+		txtConsole.setColumns(10);
 	}
 }
