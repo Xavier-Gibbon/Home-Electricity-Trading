@@ -6,7 +6,6 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 import java.util.Iterator;
@@ -14,15 +13,15 @@ import java.util.Iterator;
 public class HomeAgent extends Agent {
 	//Knows how much electricity it has
 	private int electricity = 0;
-	private int messageCount = 0;
 	//Knows the range of which the agent wants to be in
 	private int maxElect = 0;
 	private int minElect = 0;
 
-	private int vendorReplyCount = 3;
+	private int vendorReplyCount = 0;
+	private int initalVendorReplyCount = 0;
 	private int lowestVendorCost = 99999;
 	private AID vendorName;
-
+	private int money = 50000;
 	private int applianceMessageCount = 0;
 	
 	//Knows the acceptable price range for buying and selling electricity
@@ -66,14 +65,13 @@ public class HomeAgent extends Agent {
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setContent("cost");		
 		DFAgentDescription[] serviceAgents = getTarget("Appliance");
-		for (DFAgentDescription serviceAgent : serviceAgents) {
+		for (DFAgentDescription serviceAgent : serviceAgents) { //For every agent that is type "Appliance"
 			msg.addReceiver(serviceAgent.getName());
 		}
 		Iterator receivers = msg.getAllIntendedReceiver();
 		System.out.println(getLocalName() + ": Sending messages");
-		while(receivers.hasNext())
+		while(receivers.hasNext()) //Send message to all appliance agents
 		{
-			//messageCount++;
 			applianceMessageCount++;
 			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
@@ -94,26 +92,34 @@ public class HomeAgent extends Agent {
 		return null;
 	}
 
-	private void sendVendorMessage(Boolean BuySell) //Send the message to the vendors
+	private void sendVendorMessage(String message) //Send the message to the vendors
 	{
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		DFAgentDescription[] serviceAgents = getTarget("Vendor");
 		for (DFAgentDescription serviceAgent : serviceAgents) {
 			msg.addReceiver(serviceAgent.getName());
 		}
-	//	if (BuySell) //Buy electricity
-	//	{
-		msg.setContent("B" + Integer.toString(electricity));
-	//	}
-	//	else //Sell electricity
-	//	{
-	//		msg.setContent("S" + Integer.toString(electricity));
-		//}
+		if (message.equals("L")) //If we need to ask the vendors all for a lower price
+		{
+			msg.setContent(message);
+		}
+		else //Else we need to ask them how much we want to buy
+		{
+			msg.setContent(message + Integer.toString(electricity));
+		}
 		Iterator receivers = msg.getAllIntendedReceiver();
 		System.out.println(getLocalName() + ": Sending messages to Vendors : " + msg.getContent());
 		while(receivers.hasNext())
 		{
-			messageCount++;
+			//messageCount++;
+			if (message.charAt(0) == 'L') //If we are asking for a lower price, this counts how many vendors there are and how many final offers we need to wait for
+			{
+				vendorReplyCount++;
+			}
+			else //If we are sending an inital asking price, we need to wait for however many offers before we can do anything else
+			{
+				initalVendorReplyCount++;
+			}
 			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
 		send(msg);
@@ -132,120 +138,102 @@ public class HomeAgent extends Agent {
 			public void action() {
 				//Receive the other agents message
 				ACLMessage msg=receive();
-				if (msg != null)
+				if (msg != null) //If the message is not null
 				{
 					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
-
-					Integer messageData  = Integer.parseInt(msg.getContent().substring(1));
-					switch (msg.getContent().charAt(0))
+					Integer messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message this is to get the string from the first character onwards
+					switch (msg.getContent().charAt(0)) //Depending on what the first character is in the message it has a different meaning
                     {
-                        case 'A': //From an appliance
-
-							applianceMessageCount--;
+                        case 'A': //From an appliance telling us its cost of electricity
+							applianceMessageCount--; //Tick down until we have had all appliances reply to us
                             electricity += messageData;
-							if (applianceMessageCount <= 0)
+							if (applianceMessageCount <= 0) //If all appliances have replied to us then we can start buying electricity
 							{
 								System.out.println("=======================BUYING ELECTRICITY====================");
 								System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
 								buySellElectricity();
-
 							}
                             break;
-						case 'I': //From a vendor
-							ACLMessage replyBarter = msg.createReply();
-							replyBarter.setPerformative(ACLMessage.INFORM);
-							replyBarter.setContent("L");
-							System.out.println("\t" + getLocalName() + ": Sending response " + replyBarter.getContent() + " to " + msg.getSender().getLocalName());
-
-							send(replyBarter);
-
-							System.out.println("VENDOR REPLY COUNT: " + vendorReplyCount);
-							//vendorReplyCount--;
-
-							if (messageData < lowestVendorCost)
+						case 'I': //From a vendor telling us its initial offer price of electricity
+							initalVendorReplyCount--;//A vendor has replied
+							if (messageData < lowestVendorCost) //Use this to find the lowest cost vendor of the lot
 							{
-								lowestVendorCost = messageData;
-								vendorName = msg.getSender();
+								lowestVendorCost = messageData; //Store their price
+								vendorName = msg.getSender(); //Store who they are
 							}
-							if (vendorReplyCount <= 0 )
+							if (initalVendorReplyCount <= 0 ) //If all vendors have replied
 							{
-								//chooseVendor();
-								vendorReplyCount = 3;
-								lowestVendorCost = 999;
+								if (lowestVendorCost > acceptableBuyMax) //If the lowest offer from the vendors is not smaller than our maximum buy price then we ask for a lower price from all vendors
+								{
+									sendVendorMessage("L"); //Get lower price from everyone
+								}
+								else
+								{
+									chooseVendor();//If there is an acceptable price we will take that offer
+								}
 							}
 							break;
-                        case 'R': //From a vendor
-							vendorReplyCount--;
-							if (messageData < lowestVendorCost)
+                        case 'R': //From a vendor bartering with us
+							ACLMessage reply = msg.createReply();
+							reply.setPerformative(ACLMessage.INFORM);
+							reply.setContent("L");
+							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							send(reply); //We send back a message instantly again until the vendor will not barter anymore, we are waiting for its final offer
+                            break;
+                        case 'F': //Final offer from a vendor
+							vendorReplyCount--; //A vendor has sent us its final offer, we need to get all of them before we can choose a vendor to buy from
+							if (messageData < lowestVendorCost) //Store the lowest cost and vendor
 							{
 								lowestVendorCost = messageData;
 								vendorName = msg.getSender();
 							}
-							if (vendorReplyCount <= 0 )
+							if (vendorReplyCount <= 0 ) //If all vendors have replied to us we can then choose the vendor we need to buy from
 							{
-								chooseVendor();
-								vendorReplyCount = 3;
-								lowestVendorCost = 999;
+								chooseVendor(); //Choose the vendor
+								vendorReplyCount = 0; //Reset variable
+								initalVendorReplyCount = 0; //Reset variable
+								lowestVendorCost = 999; //Reset variable
 							}
                             break;
-                        case 'B': //From a vendor
-
-                            break;
+						case 'C': //Cost of the electricity from the vendor, think of this as the bill
+							System.out.println("This weeks cost of electricity is " + messageData);
+							money -= messageData; //The cost of the electricity is taken out of our money
+							electricity = 0; //Our electricity has been reset back to 0 because we have sold/bought enough to make it 0
+							break;
                         default:
-
                             break;
                     }
-
-					//System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
-					//messageCount--;
-					//if (messageCount == 0)
-					//{
-						//System.out.println("0 MESSAGES");
-						//buySellElectricity();
-						//chooseVendor();
-					//}
-					//System.out.println("Message count: " + messageCount);
-
-					//}
-
-					//May have to include try statement here
 				}
 				else
 					block();
-				//if (messageCount > 0) //Wait for all messages, not sure if this is necessary
-				//	getReply();
 			}
 		});
 	}
 
-
-	private void chooseVendor()
+	private void chooseVendor() //If we have an acceptable price we will choose the vendor we need to buy from
 	{
 		System.out.println("-------------------Choosing Vendor------------------");
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.addReceiver(vendorName);
-		msg.setContent("Y"+Integer.toString(electricity));
+		msg.setContent("Y"+Integer.toString(electricity)); //Sending to the chosen vendor the amount of electricity we need to buy
 		Iterator receivers = msg.getAllIntendedReceiver();
 		while(receivers.hasNext())
 		{
-			messageCount++;
 			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
 		send(msg);
-		//messageCount++;
 	}
 
 	private void buySellElectricity() //Buy or sell electricity based on the amount of electricity we require
 	{
-		if (electricity > 0) //Buy electricity
+		if (electricity > 0) //We have excess electricity and we need to sell some
 		{
-			sendVendorMessage(Boolean.TRUE);
+			sendVendorMessage("S");
 		}
-		else if (electricity < 0) //Sell electricity
+		else if (electricity < 0) //We are in need of electricity and we need to buy some
 		{
-			sendVendorMessage(Boolean.FALSE);
+			sendVendorMessage("B");
 		}
-
 	}
 
 	@Override

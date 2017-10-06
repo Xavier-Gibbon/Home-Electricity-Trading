@@ -1,5 +1,5 @@
 package home_electricity_agents;
-import jade.core.AID;
+
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
@@ -7,10 +7,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-
-import java.util.Iterator;
 import java.util.Random;
-
 
 public class VendorAgent extends Agent {
 	//Knows how much energy it can sell
@@ -20,10 +17,17 @@ public class VendorAgent extends Agent {
 	private String sellElectricity;
 	private String buyElectricity;
 
+	private Integer money = 0;
+	private Integer messageData;
+	private Integer currentBarterTick;
 	private String buyMin;
 	private String buyMax;
 	private	String sellMin;
 	private String sellMax;
+	private Integer barterTicks;
+	private String vendorType;
+	private Integer tempBarterPrice;
+
 	//Knows the range that it will offer
 	//This will be price per energy
 	private int acceptableBuyMax = 0;
@@ -33,12 +37,11 @@ public class VendorAgent extends Agent {
 	private int acceptableSellMin = 0;
 
 
-	void register( ServiceDescription sd) // EXPERIMENTAL:: Maybe works, maybe doesn't. Was trying to use this to find the agent type when sending messages
+	void register( ServiceDescription sd)
 	{
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
 		dfd.addServices(sd); // An agent can register one or more services
-
 		// Register the agent and its services
 		try {
 			DFService.register(this, dfd );
@@ -57,66 +60,75 @@ public class VendorAgent extends Agent {
 		sellMax = args[3].toString();
 		buyMin = args[4].toString();
 		buyMax = args[5].toString();
-		//buyElectricity = args[2].toString(); //Cost they buy electricity at
-
-		//buyElectricity = GetOffer(Integer.parseInt(buyMin), Integer.parseInt(buyMax));
+		vendorType = args[6].toString(); //Set the vendor type, this is to choose the way that the vendor barters with the home agent
 		register( sd );
-
 		addBehaviour(new CyclicBehaviour(this) {
 			@Override
 			public void action() {
-				//Receive the other agents message
-				ACLMessage msg=receive();
+				ACLMessage msg=receive();//Receive the other agents message
 				if (msg != null)
 				{
 					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
-					//Integer messageData  = Integer.parseInt(msg.getContent().substring(1));
-					//Iterator receivers = msg.getAllIntendedReceiver();
-					switch (msg.getContent().charAt(0))
+					try
 					{
-						case 'B': //From an appliance
-							ACLMessage reply = msg.createReply();
-							reply.setPerformative(ACLMessage.INFORM);
-							//reply.setContent("B" +sellElectricity);
-							reply.setContent("I" + getSellElectricity());
-
-
-
+						messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message past the first char
+					}
+					catch(java.lang.NumberFormatException ex) {}
+					ACLMessage reply = msg.createReply();
+					reply.setPerformative(ACLMessage.INFORM);
+					switch (msg.getContent().charAt(0)) //Depending on the first character the message has a different meanning
+					{
+						case 'B': //Initial message from a home agent asking how much the electricity costs
+							reply.setContent("I" + getSellElectricity());//Reply with the cost of the electricity
+							Random barterRand = new Random();
+							barterTicks = barterRand.nextInt(5) + 1; //Used to decide how many ticks (1-5) this vendor will barter with the home for
+							currentBarterTick = 0;
 							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " +  msg.getSender().getLocalName());
-
 							send(reply);
 							break;
-						case 'S': //From a vendor
-							//ACLMessage reply = msg.createReply();
-							///reply.setPerformative(ACLMessage.INFORM);
-							//reply.setContent("S"+buyElectricity);
-							//reply.setContent(buyElectricity);
-							//System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getAllReceiver().next());
-							//send(reply);
+						case 'S': //Home needing to sell electricity
+
 							break;
 						case 'L': //From a home asking for a lower price
-							Random rand = new Random();
-							int chosenNumber = rand.nextInt(100);
-							System.out.println("\t" + getLocalName() + "RANDOM CHOSEN: " + chosenNumber);
-							if (chosenNumber > 50)
+							if (currentBarterTick < barterTicks) //If the vendor agent is willing to barter any more
 							{
-								chosenNumber = (chosenNumber - 50)/2;
-								System.out.println("\t" + getLocalName() + "FIXED CHOSEN: " + chosenNumber);
-								sellElectricity = Integer.toString(Integer.parseInt(sellElectricity) * (100 - chosenNumber)/100);
-								System.out.println("\t" + getLocalName() + "Lower Price is now: " + sellElectricity);
+								currentBarterTick++; //Tick up, this is to choose how many times the vendor will barter with the home agent (1-5) times
+								switch (vendorType.charAt(0))
+								{
+									case 'A':
+										tempBarterPrice = getLinearPrice(); //The price of the electricity will fall in a linear pattern
+										break;
+									case 'B':
+										tempBarterPrice = getParabolicPrice(); //The price of the electricity will fall in a upside down parabola pattern(Small early reduction in price, but later on the price decreases faster
+										break;
+									case 'C':
+										tempBarterPrice = getNegativeParabolicPrice();//The price of the electricity will fall in a sideways parabola pattern(Larger early price reduction, but later the price will not reduce much more
+										break;
+									default:
+										break;
+								}
 							}
-							ACLMessage replyBarter = msg.createReply();
-							replyBarter.setPerformative(ACLMessage.INFORM);
-							replyBarter.setContent("R" + sellElectricity);
-							System.out.println("\t" + getLocalName() + ": Sending response " + replyBarter.getContent() + " to " + msg.getSender().getLocalName());
-
-							send(replyBarter);
+							if (currentBarterTick.equals(barterTicks)) //If the vendor is on its final offer
+							{
+								reply.setContent("F" + Integer.toString(tempBarterPrice)); //Final Offer
+								System.out.println(":::::::::::::::::FINAL OFFER FROM " + getLocalName() + ":::::::::::::::::");
+							}
+							else
+							{
+								reply.setContent("R" + Integer.toString(tempBarterPrice)); //Bartering can continue
+							}
+							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							send(reply);
 							break;
-						case 'Y':
-
+						case 'Y': //The home agent has accepted the price of this electricity
+							messageData *= -1; //Make the electricity a positive number
+							electricity -= messageData;
+							money += messageData * tempBarterPrice; //Add the amount of money
+							reply.setContent("C" + Integer.toString(messageData * tempBarterPrice));
+							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							send(reply); //Reply to the home agent with the total cost of the electricity
 							break;
 						default:
-
 							break;
 					}
 				}
@@ -125,13 +137,22 @@ public class VendorAgent extends Agent {
 			}
 		});
 	}
-	//Increments the electricity
-	private void IncrementElectricity()
+
+	private Integer getLinearPrice() //Linear path eg: y = -x + 100
 	{
-		electricity += electIncrement;
+		return -((Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin))/5) * currentBarterTick + Integer.parseInt(sellElectricity);
 	}
 
-	private String getSellElectricity()
+	private Integer getParabolicPrice() //Slow start, late discounts eg: y = -x^2 + 100
+	{
+		return (int)-(((Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin))/Math.pow(5,2)) * Math.pow(currentBarterTick,2)) + Integer.parseInt(sellElectricity);
+	}
+	private Integer getNegativeParabolicPrice() //Early discounts slow later eg: y = (100/(x+4))+75
+	{
+		return (int)-(Math.sqrt((Math.pow(Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin),2)* currentBarterTick)/5)) + Integer.parseInt(sellElectricity);
+	}
+
+	private String getSellElectricity() //Get the initial price of electricity for this tick
 	{
 		sellElectricity = GetOffer(Integer.parseInt(sellMin), Integer.parseInt(sellMax));
 		return sellElectricity;
@@ -143,14 +164,11 @@ public class VendorAgent extends Agent {
 		return buyElectricity;
 	}
 
-	//Creates an offer, based on the given minimum and maximum values
-	public String GetOffer(int min, int max)
+	public String GetOffer(int min, int max)//Creates an offer, based on the given minimum and maximum values
 	{
 		int difference = max - min;
 		Random theRandom = new Random();
-		
 		String offer = Integer.toString(min + theRandom.nextInt(difference));
-		
 		return offer;
 	}
 }
