@@ -1,6 +1,7 @@
 package gui_application;
 
 import gui_application.MainMenu;
+import jade.tools.sniffer.*;
 
 public final class MiddleMan {
 	private MiddleMan() {}
@@ -9,7 +10,7 @@ public final class MiddleMan {
 	public static void SetMenu(MainMenu theMenu)
 	{
 		theWindow = theMenu;
-		SendMessageToMenu("I have done it!\nEverything is alright.");
+		SendMessageToMenu("Menu Textbox is ready!");
 	}
 	
 	//Any agent that wants to send its messages to the console can do so by calling this method

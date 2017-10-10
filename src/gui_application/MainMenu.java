@@ -108,6 +108,6 @@ public class MainMenu {
 	
 	public void RecieveMessage(String theMessage)
 	{
-		txtConsole.setText(txtConsole.getText() + theMessage + "\n");
+		txtConsole.append(theMessage + "\n");
 	}
 }
