@@ -2,6 +2,7 @@ package gui_application;
 
 import java.awt.EventQueue;
 import java.awt.Rectangle;
+import gui_application.MiddleMan;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -13,11 +14,11 @@ import java.awt.event.ActionEvent;
 import javax.swing.JTable;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 
 public class MainMenu {
 
 	private JFrame frame;
-	private JTextField txtConsole;
 
 	/**
 	 * Launch the application.
@@ -40,7 +41,10 @@ public class MainMenu {
 	 */
 	public MainMenu() {
 		initialize();
+		MiddleMan.SetMenu(this);
 	}
+	
+	private JTextArea txtConsole;
 
 	/**
 	 * Initialize the contents of the frame.
@@ -98,8 +102,12 @@ public class MainMenu {
 		scrollPane.setBounds(72, 98, 539, 151);
 		frame.getContentPane().add(scrollPane);
 		
-		txtConsole = new JTextField();
+		txtConsole = new JTextArea();
 		scrollPane.setViewportView(txtConsole);
-		txtConsole.setColumns(10);
+	}
+	
+	public void RecieveMessage(String theMessage)
+	{
+		txtConsole.setText(txtConsole.getText() + theMessage + "\n");
 	}
 }
