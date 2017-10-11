@@ -8,6 +8,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import java.util.Random;
+import gui_application.MiddleMan;
 
 public class VendorAgent extends Agent {
 	//Knows how much energy it can sell
@@ -68,7 +69,7 @@ public class VendorAgent extends Agent {
 				ACLMessage msg=receive();//Receive the other agents message
 				if (msg != null)
 				{
-					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
 					try
 					{
 						messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message past the first char
@@ -83,7 +84,7 @@ public class VendorAgent extends Agent {
 							Random barterRand = new Random();
 							barterTicks = barterRand.nextInt(5) + 1; //Used to decide how many ticks (1-5) this vendor will barter with the home for
 							currentBarterTick = 0;
-							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " +  msg.getSender().getLocalName());
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " +  msg.getSender().getLocalName());
 							send(reply);
 							break;
 						case 'S': //Home needing to sell electricity
@@ -111,13 +112,13 @@ public class VendorAgent extends Agent {
 							if (currentBarterTick.equals(barterTicks)) //If the vendor is on its final offer
 							{
 								reply.setContent("F" + Integer.toString(tempBarterPrice)); //Final Offer
-								System.out.println(":::::::::::::::::FINAL OFFER FROM " + getLocalName() + ":::::::::::::::::");
+								MiddleMan.SendMessageToMenu(":::::::::::::::::FINAL OFFER FROM " + getLocalName() + ":::::::::::::::::");
 							}
 							else
 							{
 								reply.setContent("R" + Integer.toString(tempBarterPrice)); //Bartering can continue
 							}
-							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 							send(reply);
 							break;
 						case 'Y': //The home agent has accepted the price of this electricity
@@ -125,7 +126,7 @@ public class VendorAgent extends Agent {
 							electricity -= messageData;
 							money += messageData * tempBarterPrice; //Add the amount of money
 							reply.setContent("C" + Integer.toString(messageData * tempBarterPrice));
-							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 							send(reply); //Reply to the home agent with the total cost of the electricity
 							break;
 						default:

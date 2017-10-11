@@ -10,6 +10,9 @@ import jade.lang.acl.ACLMessage;
 
 import java.util.Iterator;
 
+import gui_application.MiddleMan;
+import gui_application.MainMenu;
+
 public class HomeAgent extends Agent {
 	//Knows how much electricity it has
 	private int electricity = 0;
@@ -36,24 +39,24 @@ public class HomeAgent extends Agent {
 
 	public void activateCounter() //Activate counter, on each tick of the counter the home will send a message to all of the appliances
 	{
-		System.out.println(getLocalName() + ": I have been asked to start counting");
+		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to start counting");
 		counter = new TickerBehaviour(this, 500) {
 			public void onStart()
 			{
 				super.onStart();
-				System.out.println(getLocalName()+ ": Start counting");
+				MiddleMan.SendMessageToMenu(getLocalName()+ ": Start counting");
 			}
 			@Override
 			protected void onTick()
 			{
-				System.out.println("\n" + getLocalName() + ": Counter : " + getTickCount());
+				MiddleMan.SendMessageToMenu("\n" + getLocalName() + ": Counter : " + getTickCount());
 				sendMessagesCost();
 
 				if (getTickCount() >= 5)
 					deactivateCounter();
 			}
 			public int onEnd() {
-				System.out.println(getLocalName() + ": Stop counting");
+				MiddleMan.SendMessageToMenu(getLocalName() + ": Stop counting");
 				return super.onEnd();
 			}
 		};
@@ -69,11 +72,11 @@ public class HomeAgent extends Agent {
 			msg.addReceiver(serviceAgent.getName());
 		}
 		Iterator receivers = msg.getAllIntendedReceiver();
-		System.out.println(getLocalName() + ": Sending messages");
+		MiddleMan.SendMessageToMenu(getLocalName() + ": Sending messages");
 		while(receivers.hasNext()) //Send message to all appliance agents
 		{
 			applianceMessageCount++;
-			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+			MiddleMan.SendMessageToMenu("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
 		send(msg);
 	}
@@ -125,7 +128,7 @@ public class HomeAgent extends Agent {
 			msg.setContent(message + Integer.toString(electricity));
 		}
 		Iterator receivers = msg.getAllIntendedReceiver();
-		System.out.println(getLocalName() + ": Sending messages to Vendors : " + msg.getContent());
+		MiddleMan.SendMessageToMenu(getLocalName() + ": Sending messages to Vendors : " + msg.getContent());
 		while(receivers.hasNext())
 		{
 			//messageCount++;
@@ -137,14 +140,14 @@ public class HomeAgent extends Agent {
 			{
 				initalVendorReplyCount++;
 			}
-			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+			MiddleMan.SendMessageToMenu("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
 		send(msg);
 	}
 
 	public void deactivateCounter()// Stop the counter
 	{
-		System.out.println(getLocalName() + ": I have been asked to stop counting");
+		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to stop counting");
 		counter.stop(); // stopping the ticker behaviour
 	}
 
@@ -157,7 +160,7 @@ public class HomeAgent extends Agent {
 				ACLMessage msg=receive();
 				if (msg != null) //If the message is not null
 				{
-					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
 					Integer messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message this is to get the string from the first character onwards
 					switch (msg.getContent().charAt(0)) //Depending on what the first character is in the message it has a different meaning
                     {
@@ -166,8 +169,8 @@ public class HomeAgent extends Agent {
                             electricity += messageData;
 							if (applianceMessageCount <= 0) //If all appliances have replied to us then we can start buying electricity
 							{
-								System.out.println("=======================BUYING ELECTRICITY====================");
-								System.out.println(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
+								MiddleMan.SendMessageToMenu("=======================BUYING ELECTRICITY====================");
+								MiddleMan.SendMessageToMenu(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
 								buySellElectricity();
 							}
                             break;
@@ -194,7 +197,7 @@ public class HomeAgent extends Agent {
 							ACLMessage reply = msg.createReply();
 							reply.setPerformative(ACLMessage.INFORM);
 							reply.setContent("L");
-							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 							send(reply); //We send back a message instantly again until the vendor will not barter anymore, we are waiting for its final offer
                             break;
                         case 'F': //Final offer from a vendor
@@ -213,7 +216,7 @@ public class HomeAgent extends Agent {
 							}
                             break;
 						case 'C': //Cost of the electricity from the vendor, think of this as the bill
-							System.out.println("This weeks cost of electricity is " + messageData);
+							MiddleMan.SendMessageToMenu("This weeks cost of electricity is " + messageData);
 							money -= messageData; //The cost of the electricity is taken out of our money
 							electricity = 0; //Our electricity has been reset back to 0 because we have sold/bought enough to make it 0
 							break;
@@ -229,14 +232,14 @@ public class HomeAgent extends Agent {
 
 	private void chooseVendor() //If we have an acceptable price we will choose the vendor we need to buy from
 	{
-		System.out.println("-------------------Choosing Vendor------------------");
+		MiddleMan.SendMessageToMenu("-------------------Choosing Vendor------------------");
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.addReceiver(vendorName);
 		msg.setContent("Y"+Integer.toString(electricity)); //Sending to the chosen vendor the amount of electricity we need to buy
 		Iterator receivers = msg.getAllIntendedReceiver();
 		while(receivers.hasNext())
 		{
-			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+			MiddleMan.SendMessageToMenu("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
 		}
 		send(msg);
 	}
@@ -256,7 +259,8 @@ public class HomeAgent extends Agent {
 	@Override
 	protected void setup() //Start the agent
 	{
-		System.out.println(getLocalName() + ": I have been created");
+		MainMenu.main(null);
+		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been created");
 		activateCounter();
 		getReply();
 	}

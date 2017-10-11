@@ -8,6 +8,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import java.util.Random;
+import gui_application.MiddleMan;
 
 public class ApplianceAgent extends Agent {
 	//How much electricity the appliance consumes
@@ -62,6 +63,8 @@ public class ApplianceAgent extends Agent {
 				ACLMessage msg=receive();
 				if (msg != null)
 				{
+					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+
 					if (msg.getContent().equals("cost"))
 					{
 						if(on==true) {
@@ -69,24 +72,24 @@ public class ApplianceAgent extends Agent {
 							reply.setPerformative(ACLMessage.INFORM);
 							
 							reply.setContent("A" + this.GetConsumption());
-							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getAllReceiver().next());
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 							send(reply);	
 						}
 						else {
-							System.out.println(getLocalName()+ " NOT sending cost: Appliance OFF");
+							MiddleMan.SendMessageToMenu(getLocalName()+ " NOT sending cost: Appliance OFF");
 						}
 					}
 					if (msg.getContent().equals("toggle"))
 					{
 						//Toggle appliance on/off
 						on = !on;
-						
+            
 						//print on / off state
 						if(on==true) {
-							System.out.println(getLocalName()+": ON");
+							MiddleMan.SendMessageToMenu(getLocalName()+": ON");
 						}
 						else {
-							System.out.println(getLocalName()+": OFF");
+							MiddleMan.SendMessageToMenu(getLocalName()+": OFF");
 						}
 					}
 				}
