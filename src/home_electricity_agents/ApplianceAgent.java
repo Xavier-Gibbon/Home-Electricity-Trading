@@ -16,6 +16,10 @@ public class ApplianceAgent extends Agent {
 	private int electConsumption;
 	private int consumeRange;
 
+	//"on" state
+	private boolean on;
+	private String onParam;
+		
 	@Override
 	protected void setup() //Start the agent
 	{
@@ -27,6 +31,16 @@ public class ApplianceAgent extends Agent {
 		electConsumption = Integer.parseInt(args[2].toString());
 		consumeRange = Integer.parseInt(args[3].toString());
 		register( sd );
+		
+		onParam = (args[4].toString());
+		if(onParam.equals("on"))
+		{
+			on = true;
+		}
+		if(onParam.equals("off"))
+		{
+			on = false;
+		}
 
 		addBehaviour(new CyclicBehaviour(this) 
 		{
@@ -50,15 +64,33 @@ public class ApplianceAgent extends Agent {
 				if (msg != null)
 				{
 					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+
 					if (msg.getContent().equals("cost"))
 					{
-						ACLMessage reply = msg.createReply();
-						reply.setPerformative(ACLMessage.INFORM);
-						
-						reply.setContent("A" + this.GetConsumption());
-						MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
-
-						send(reply);
+						if(on==true) {
+							ACLMessage reply = msg.createReply();
+							reply.setPerformative(ACLMessage.INFORM);
+							
+							reply.setContent("A" + this.GetConsumption());
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							send(reply);	
+						}
+						else {
+							MiddleMan.SendMessageToMenu(getLocalName()+ " NOT sending cost: Appliance OFF");
+						}
+					}
+					if (msg.getContent().equals("toggle"))
+					{
+						//Toggle appliance on/off
+						on = !on;
+            
+						//print on / off state
+						if(on==true) {
+							MiddleMan.SendMessageToMenu(getLocalName()+": ON");
+						}
+						else {
+							MiddleMan.SendMessageToMenu(getLocalName()+": OFF");
+						}
 					}
 				}
 				else
