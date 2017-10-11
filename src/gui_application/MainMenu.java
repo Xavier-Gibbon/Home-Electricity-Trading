@@ -103,6 +103,7 @@ public class MainMenu {
 		frame.getContentPane().add(scrollPane);
 		
 		txtConsole = new JTextArea();
+		txtConsole.setEditable(false);
 		scrollPane.setViewportView(txtConsole);
 	}
 	
