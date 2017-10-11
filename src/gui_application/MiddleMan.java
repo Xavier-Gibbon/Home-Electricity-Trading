@@ -22,7 +22,7 @@ public final class MiddleMan {
 		}
 		else
 		{
-			System.out.print(theMessage);
+			System.out.println(theMessage);
 		}
 	}
 }

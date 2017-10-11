@@ -8,6 +8,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import java.util.Random;
+import gui_application.MiddleMan;
 
 public class ApplianceAgent extends Agent {
 	//How much electricity the appliance consumes
@@ -48,14 +49,14 @@ public class ApplianceAgent extends Agent {
 				ACLMessage msg=receive();
 				if (msg != null)
 				{
-					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
 					if (msg.getContent().equals("cost"))
 					{
 						ACLMessage reply = msg.createReply();
 						reply.setPerformative(ACLMessage.INFORM);
 						
 						reply.setContent("A" + this.GetConsumption());
-						System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+						MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 
 						send(reply);
 					}
