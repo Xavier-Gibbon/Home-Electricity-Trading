@@ -16,6 +16,13 @@ public final class MiddleMan {
 	//Any agent that wants to send its messages to the console can do so by calling this method
 	public static void SendMessageToMenu(String theMessage)
 	{
-		theWindow.RecieveMessage(theMessage);
+		if (theWindow != null)
+		{
+			theWindow.RecieveMessage(theMessage);
+		}
+		else
+		{
+			System.out.print(theMessage);
+		}
 	}
 }
