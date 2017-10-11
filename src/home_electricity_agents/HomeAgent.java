@@ -78,6 +78,23 @@ public class HomeAgent extends Agent {
 		send(msg);
 	}
 	
+	private void sendMessagesOnOff() //Send the ping to the appliances, toggling "on" state
+	{
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.setContent("toggle");		
+		DFAgentDescription[] serviceAgents = getTarget("Appliance");
+		for (DFAgentDescription serviceAgent : serviceAgents) {
+			msg.addReceiver(serviceAgent.getName());
+		}
+		Iterator receivers = msg.getAllIntendedReceiver();
+		System.out.println(getLocalName() + ": Sending messages");
+		while(receivers.hasNext())
+		{
+			System.out.println("\t"+getLocalName() + ": Sending message to " +((AID)receivers.next()).getLocalName());
+		}
+		send(msg);
+	}
+	
 	private DFAgentDescription[] getTarget(String service)
 	{
 		DFAgentDescription dfd = new DFAgentDescription();

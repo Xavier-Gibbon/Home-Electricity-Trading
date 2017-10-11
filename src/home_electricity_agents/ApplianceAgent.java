@@ -15,6 +15,10 @@ public class ApplianceAgent extends Agent {
 	private int electConsumption;
 	private int consumeRange;
 
+	//"on" state
+	private boolean on;
+	private String onParam;
+		
 	@Override
 	protected void setup() //Start the agent
 	{
@@ -26,6 +30,16 @@ public class ApplianceAgent extends Agent {
 		electConsumption = Integer.parseInt(args[2].toString());
 		consumeRange = Integer.parseInt(args[3].toString());
 		register( sd );
+		
+		onParam = (args[4].toString());
+		if(onParam.equals("on"))
+		{
+			on = true;
+		}
+		if(onParam.equals("off"))
+		{
+			on = false;
+		}
 
 		addBehaviour(new CyclicBehaviour(this) 
 		{
@@ -46,18 +60,31 @@ public class ApplianceAgent extends Agent {
 			{
 				//Receive the other agents message
 				ACLMessage msg=receive();
-				if (msg != null)
+				if (msg.getContent().equals("cost"))
 				{
-					System.out.println(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
-					if (msg.getContent().equals("cost"))
-					{
+					if(on==true) {
 						ACLMessage reply = msg.createReply();
 						reply.setPerformative(ACLMessage.INFORM);
 						
 						reply.setContent("A" + this.GetConsumption());
-						System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
-
-						send(reply);
+						System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getAllReceiver().next());
+						send(reply);	
+					}
+					else {
+						System.out.println(getLocalName()+ " NOT sending cost: Appliance OFF");
+					}
+				}
+				if (msg.getContent().equals("toggle"))
+				{
+					//Toggle appliance on/off
+					on = !on;
+					
+					//print on / off state
+					if(on==true) {
+						System.out.println(getLocalName()+": ON");
+					}
+					else {
+						System.out.println(getLocalName()+": OFF");
 					}
 				}
 				else
