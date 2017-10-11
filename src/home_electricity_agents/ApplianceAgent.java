@@ -60,31 +60,34 @@ public class ApplianceAgent extends Agent {
 			{
 				//Receive the other agents message
 				ACLMessage msg=receive();
-				if (msg.getContent().equals("cost"))
+				if (msg != null)
 				{
-					if(on==true) {
-						ACLMessage reply = msg.createReply();
-						reply.setPerformative(ACLMessage.INFORM);
+					if (msg.getContent().equals("cost"))
+					{
+						if(on==true) {
+							ACLMessage reply = msg.createReply();
+							reply.setPerformative(ACLMessage.INFORM);
+							
+							reply.setContent("A" + this.GetConsumption());
+							System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getAllReceiver().next());
+							send(reply);	
+						}
+						else {
+							System.out.println(getLocalName()+ " NOT sending cost: Appliance OFF");
+						}
+					}
+					if (msg.getContent().equals("toggle"))
+					{
+						//Toggle appliance on/off
+						on = !on;
 						
-						reply.setContent("A" + this.GetConsumption());
-						System.out.println("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getAllReceiver().next());
-						send(reply);	
-					}
-					else {
-						System.out.println(getLocalName()+ " NOT sending cost: Appliance OFF");
-					}
-				}
-				if (msg.getContent().equals("toggle"))
-				{
-					//Toggle appliance on/off
-					on = !on;
-					
-					//print on / off state
-					if(on==true) {
-						System.out.println(getLocalName()+": ON");
-					}
-					else {
-						System.out.println(getLocalName()+": OFF");
+						//print on / off state
+						if(on==true) {
+							System.out.println(getLocalName()+": ON");
+						}
+						else {
+							System.out.println(getLocalName()+": OFF");
+						}
 					}
 				}
 				else
