@@ -33,6 +33,7 @@ public class SettingsWindow extends JFrame {
 	private JTextField txtTradingMinutes;
 	private JTextField txtMaxOffers;
 	private JTextField txtRejectionSeconds;
+	private JTextField txtTradingSeconds;
 
 	/**
 	 * Launch the application.
@@ -167,6 +168,9 @@ public class SettingsWindow extends JFrame {
 				
 				txtTradingMinutes.setEnabled(selected);
 				txtTradingMinutes.setEditable(selected);
+				
+				txtTradingSeconds.setEnabled(selected);
+				txtTradingSeconds.setEnabled(selected);
 			}
 		});
 		chkAutomaticTrading.setToolTipText("Check to enable the house to automatically buy and sell electricity");
@@ -184,22 +188,35 @@ public class SettingsWindow extends JFrame {
 		//Trading hours text box <-- Stores how many hours there will be in between the house automatically trading electricity
 		txtTradingHours = new JTextField();
 		txtTradingHours.setToolTipText("The number of hours before the house will automatically trade with vendors");
-		txtTradingHours.setBounds(272, 331, 86, 20);
+		txtTradingHours.setBounds(272, 331, 64, 20);
 		contentPane.add(txtTradingHours);
 		txtTradingHours.setColumns(10);
 		
 		//Trading minutes label
 		JLabel lblTradingMinutes = new JLabel("Minutes");
 		lblTradingMinutes.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblTradingMinutes.setBounds(403, 311, 56, 14);
+		lblTradingMinutes.setBounds(358, 309, 56, 14);
 		contentPane.add(lblTradingMinutes);
 		
 		//Trading minutes text box <-- Stores how many minutes there will be in between the house automatically trading electricity
 		txtTradingMinutes = new JTextField();
 		txtTradingMinutes.setToolTipText("The number of minutes before the house will automatically trade with vendors");
-		txtTradingMinutes.setBounds(403, 331, 86, 20);
+		txtTradingMinutes.setBounds(346, 331, 64, 20);
 		contentPane.add(txtTradingMinutes);
 		txtTradingMinutes.setColumns(10);
+		
+		//Trading seconds label
+		JLabel lblTradingSeconds = new JLabel("Seconds");
+		lblTradingSeconds.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		lblTradingSeconds.setBounds(444, 309, 56, 14);
+		contentPane.add(lblTradingSeconds);
+		
+		//Trading seconds text box <-- Stores how many seconds there will be in between the house automatically trading electricity
+		txtTradingSeconds = new JTextField();
+		txtTradingSeconds.setToolTipText("The number of minutes before the house will automatically trade with vendors");
+		txtTradingSeconds.setColumns(10);
+		txtTradingSeconds.setBounds(443, 331, 64, 20);
+		contentPane.add(txtTradingSeconds);
 		
 		//Termination condition label
 		JLabel lblTerminationCondition = new JLabel("Termination Conditions");
@@ -266,6 +283,8 @@ public class SettingsWindow extends JFrame {
 		tblApplianceList.getColumnModel().getColumn(1).setPreferredWidth(65);
 		tblApplianceList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		
+		
+		//Dollar dollar bills yo
 		JLabel lblPerUnit = new JLabel("($ per unit)");
 		lblPerUnit.setFont(new Font("Tahoma", Font.BOLD, 12));
 		lblPerUnit.setBounds(377, 30, 72, 14);
