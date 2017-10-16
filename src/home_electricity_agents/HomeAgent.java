@@ -29,11 +29,17 @@ public class HomeAgent extends Agent {
 	
 	//Knows the acceptable price range for buying and selling electricity
 	//This will be price per energy
-	private int acceptableBuyMax = 0;
-	private int acceptableBuyMin = 0;
+	public int acceptableBuyMax = 0;
+	public int acceptableBuyMin = 0;
 	
-	private int acceptableSellMax = 0;
-	private int acceptableSellMin = 0;
+	public int acceptableSellMax = 0;
+	public int acceptableSellMin = 0;
+	
+	//Times are in seconds
+	public int timeBetweenTrade = 500;
+	public int maxOffers = 5;
+	public int timeBeforeRejection = 10;
+	public boolean doesAutomaticTrade = true;
 
 	private TickerBehaviour counter;
 
@@ -244,6 +250,7 @@ public class HomeAgent extends Agent {
 	{
 		MainMenu.main(null);
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been created");
+		MiddleMan.SetHomeAgent(this);
 		activateCounter();
 		getReply();
 	}

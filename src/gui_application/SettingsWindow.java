@@ -21,6 +21,8 @@ import javax.swing.JCheckBox;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JScrollPane;
 
+import home_electricity_agents.HomeAgent;
+
 public class SettingsWindow extends JFrame {
 
 	private JPanel contentPane;
@@ -34,11 +36,12 @@ public class SettingsWindow extends JFrame {
 	private JTextField txtMaxOffers;
 	private JTextField txtRejectionSeconds;
 	private JTextField txtTradingSeconds;
+	private JCheckBox chkAutomaticTrading;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	private static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -82,6 +85,11 @@ public class SettingsWindow extends JFrame {
 		
 		//Save button functionality
 		JButton btnSave = new JButton("Save");
+		btnSave.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				SaveForm();
+			}
+		});
 		btnSave.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		btnSave.setBounds(562, 309, 112, 47);
 		contentPane.add(btnSave);
@@ -157,7 +165,7 @@ public class SettingsWindow extends JFrame {
 		contentPane.add(lblTimeInterval);
 		
 		//Automatic trading checkbox settings
-		JCheckBox chkAutomaticTrading = new JCheckBox("Enable Automatic Trading");
+		chkAutomaticTrading = new JCheckBox("Enable Automatic Trading");
 		chkAutomaticTrading.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				//This makes the trading hours and minutes textboxes enabled or disabled
@@ -213,7 +221,7 @@ public class SettingsWindow extends JFrame {
 		
 		//Trading seconds text box <-- Stores how many seconds there will be in between the house automatically trading electricity
 		txtTradingSeconds = new JTextField();
-		txtTradingSeconds.setToolTipText("The number of minutes before the house will automatically trade with vendors");
+		txtTradingSeconds.setToolTipText("The number of seconds before the house will automatically trade with vendors");
 		txtTradingSeconds.setColumns(10);
 		txtTradingSeconds.setBounds(443, 331, 64, 20);
 		contentPane.add(txtTradingSeconds);
@@ -314,5 +322,72 @@ public class SettingsWindow extends JFrame {
 		label_4.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		label_4.setBounds(389, 78, 14, 14);
 		contentPane.add(label_4);
+		
+		
+		this.FillForm();
+	}
+	
+	/*
+	 * Gets information from the home agent and fills the form with its info
+	 */
+	public void FillForm()
+	{
+		HomeAgent theAgent = MiddleMan.GetHomeAgent();
+		
+		txtMaxBuyRange.setText(Integer.toString(theAgent.acceptableBuyMax));
+		txtMinBuyRange.setText(Integer.toString(theAgent.acceptableBuyMin));
+		txtMaxSellRange.setText(Integer.toString(theAgent.acceptableSellMax));
+		txtMinSellRange.setText(Integer.toString(theAgent.acceptableSellMin));
+		
+		chkAutomaticTrading.setSelected(theAgent.doesAutomaticTrade);
+		int tradingSeconds = theAgent.timeBetweenTrade;
+		int tradingMinutes = 0;
+		int tradingHours = 0;
+		
+		if (tradingSeconds >= 60)
+		{
+			int i = tradingSeconds % 60;
+			tradingSeconds -= i;
+			tradingMinutes = tradingSeconds / 60;
+			tradingSeconds = i;
+			
+			if (tradingMinutes >= 60)
+			{
+				i = tradingMinutes % 60;
+				tradingMinutes -= i;
+				tradingHours = tradingMinutes / 60;
+				tradingMinutes = i;
+			}
+		}
+		
+		txtTradingSeconds.setText(Integer.toString(tradingSeconds));
+		txtTradingMinutes.setText(Integer.toString(tradingMinutes));
+		txtTradingHours.setText(Integer.toString(tradingHours));
+		
+		txtMaxOffers.setText(Integer.toString(theAgent.maxOffers));
+		txtRejectionSeconds.setText(Integer.toString(theAgent.timeBeforeRejection));
+		
+	}
+	
+	public void SaveForm()
+	{
+		HomeAgent theAgent = MiddleMan.GetHomeAgent();
+		
+		theAgent.acceptableBuyMax = Integer.parseInt(txtMaxBuyRange.getText());
+		theAgent.acceptableBuyMin = Integer.parseInt(txtMinBuyRange.getText());
+		theAgent.acceptableSellMax = Integer.parseInt(txtMaxSellRange.getText());
+		theAgent.acceptableSellMin = Integer.parseInt(txtMinSellRange.getText());
+		
+		theAgent.doesAutomaticTrade = chkAutomaticTrading.isSelected();
+		
+		int tradingSeconds = Integer.parseInt(txtTradingSeconds.getText()) + Integer.parseInt(txtTradingMinutes.getText()) * 60 + Integer.parseInt(txtTradingHours.getText()) * 3600;
+		
+		theAgent.timeBetweenTrade = tradingSeconds;
+		
+		theAgent.maxOffers = Integer.parseInt(txtMaxOffers.getText());
+		theAgent.timeBeforeRejection = Integer.parseInt(txtRejectionSeconds.getText());
+		
 	}
 }
+
+
