@@ -9,6 +9,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
 import java.util.Iterator;
+import java.util.*;
 
 import gui_application.MiddleMan;
 import gui_application.MainMenu;
@@ -26,6 +27,7 @@ public class HomeAgent extends Agent {
 	private AID vendorName;
 	private int money = 50000;
 	private int applianceMessageCount = 0;
+	private int applianceStatusCount = 0;
 	
 	//Knows the acceptable price range for buying and selling electricity
 	//This will be price per energy
@@ -180,6 +182,9 @@ public class HomeAgent extends Agent {
 								buySellElectricity();
 							}
                             break;
+                        case 'S': //From an appliance telling us if its on or off. Used for the Settings window table filling
+                        	
+                        	break;
 						case 'I': //From a vendor telling us its initial offer price of electricity
 							initalVendorReplyCount--;//A vendor has replied
 							if (messageData < lowestVendorCost) //Use this to find the lowest cost vendor of the lot
@@ -260,6 +265,56 @@ public class HomeAgent extends Agent {
 		{
 			sendVendorMessage("B");
 		}
+	}
+	
+	//This gets the appliances ids and returns them with their on/off status
+	public Map<AID, Boolean> GetAppliances()
+	{
+		
+		Map<AID, Boolean> theAgentsIDs = new HashMap<AID, Boolean>();
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		
+		DFAgentDescription[] serviceAgents = getTarget("Appliance");
+		
+		for (DFAgentDescription serviceAgent : serviceAgents) { //For every agent that is type "Appliance"
+			theAgentsIDs.put(serviceAgent.getName(), true);
+			msg.addReceiver(serviceAgent.getName());
+		}
+		
+		Iterator receivers = msg.getAllIntendedReceiver();
+		
+		while(receivers.hasNext()) //Send message to all appliance agents
+		{
+			applianceStatusCount++;
+			receivers.next();
+		}
+		
+		send(msg);
+		
+		
+		
+		return theAgentsIDs;
+	}
+	
+	public void SetAppliancesStatus(Map<AID, Boolean> theAgents)
+	{
+		Set<AID> theIDs = theAgents.keySet();
+		ACLMessage onMsg = new ACLMessage(ACLMessage.INFORM);
+		ACLMessage offMsg = new ACLMessage(ACLMessage.INFORM);
+		for (AID id : theIDs)
+		{
+			if (theAgents.get(id))
+			{
+				onMsg.addReceiver(id);
+			}
+			else
+			{
+				offMsg.addReceiver(id);
+			}
+		}
+		
+		send(onMsg);
+		send(offMsg);
 	}
 
 	@Override

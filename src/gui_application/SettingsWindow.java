@@ -23,6 +23,9 @@ import javax.swing.JScrollPane;
 
 import home_electricity_agents.HomeAgent;
 
+import jade.core.AID;
+import java.util.*;
+
 public class SettingsWindow extends JFrame {
 
 	private JPanel contentPane;
@@ -274,21 +277,28 @@ public class SettingsWindow extends JFrame {
 		scrlPneApplianceList.setViewportView(tblApplianceList);
 		tblApplianceList.setModel(new DefaultTableModel(
 			new Object[][] {
-				{null, Boolean.TRUE},
 			},
 			new String[] {
-				"Appliance Name", "Enabled?"
+				"Appliance Object", "Appliance Name", "Enabled?"
 			}
 		) {
 			Class[] columnTypes = new Class[] {
-				String.class, Boolean.class
+				Object.class, String.class, Boolean.class
 			};
 			public Class getColumnClass(int columnIndex) {
 				return columnTypes[columnIndex];
 			}
+			boolean[] columnEditables = new boolean[] {
+				false, false, true
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
+			}
 		});
-		tblApplianceList.getColumnModel().getColumn(0).setPreferredWidth(92);
-		tblApplianceList.getColumnModel().getColumn(1).setPreferredWidth(65);
+		tblApplianceList.getColumnModel().getColumn(0).setResizable(false);
+		tblApplianceList.getColumnModel().getColumn(0).setPreferredWidth(15);
+		tblApplianceList.getColumnModel().getColumn(1).setPreferredWidth(92);
+		tblApplianceList.getColumnModel().getColumn(2).setPreferredWidth(65);
 		tblApplianceList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		
 		
@@ -367,6 +377,18 @@ public class SettingsWindow extends JFrame {
 		txtMaxOffers.setText(Integer.toString(theAgent.maxOffers));
 		txtRejectionSeconds.setText(Integer.toString(theAgent.timeBeforeRejection));
 		
+		Map<AID, Boolean> theAppliances = theAgent.GetAppliances();
+		
+		DefaultTableModel theTable = (DefaultTableModel)tblApplianceList.getModel();
+		Set<AID> theIDs = theAppliances.keySet();
+		for (AID id : theIDs)
+		{
+			theTable.addRow(new Object[] {
+					id,
+					id.getLocalName(),
+					theAppliances.get(id)
+			});
+		}		
 	}
 	
 	public void SaveForm()
@@ -386,6 +408,17 @@ public class SettingsWindow extends JFrame {
 		
 		theAgent.maxOffers = Integer.parseInt(txtMaxOffers.getText());
 		theAgent.timeBeforeRejection = Integer.parseInt(txtRejectionSeconds.getText());
+		
+		Map<AID, Boolean> theAppliances = new HashMap<AID, Boolean>();
+		DefaultTableModel theTable = (DefaultTableModel)tblApplianceList.getModel();
+		int rowCount = theTable.getRowCount();
+		for (int i = 0; i < rowCount; i++)
+		{
+			theAppliances.put((AID)theTable.getValueAt(i, 0), (Boolean)theTable.getValueAt(i, 1));
+		}
+		
+		theAgent.SetAppliancesStatus(theAppliances);
+		
 		
 	}
 }

@@ -17,7 +17,7 @@ public class ApplianceAgent extends Agent {
 	private int consumeRange;
 
 	//"on" state
-	private boolean on;
+	public boolean isOn;
 	private String onParam;
 		
 	@Override
@@ -35,11 +35,11 @@ public class ApplianceAgent extends Agent {
 		onParam = (args[4].toString());
 		if(onParam.equals("on"))
 		{
-			on = true;
+			isOn = true;
 		}
 		if(onParam.equals("off"))
 		{
-			on = false;
+			isOn = false;
 		}
 
 		addBehaviour(new CyclicBehaviour(this) 
@@ -67,7 +67,7 @@ public class ApplianceAgent extends Agent {
 
 					if (msg.getContent().equals("cost"))
 					{
-						if(on==true) {
+						if(isOn==true) {
 							ACLMessage reply = msg.createReply();
 							reply.setPerformative(ACLMessage.INFORM);
 							
@@ -79,18 +79,27 @@ public class ApplianceAgent extends Agent {
 							MiddleMan.SendMessageToMenu(getLocalName()+ " NOT sending cost: Appliance OFF");
 						}
 					}
-					if (msg.getContent().equals("toggle"))
+					else if (msg.getContent().equals("on"))
 					{
 						//Toggle appliance on/off
-						on = !on;
-            
-						//print on / off state
-						if(on==true) {
-							MiddleMan.SendMessageToMenu(getLocalName()+": ON");
-						}
-						else {
-							MiddleMan.SendMessageToMenu(getLocalName()+": OFF");
-						}
+						isOn = true;
+
+						MiddleMan.SendMessageToMenu(getLocalName()+": is now ON");
+					}
+					else if (msg.getContent().equals("off"))
+					{
+						isOn = false;
+						
+						MiddleMan.SendMessageToMenu(getLocalName()+": is now OFF");
+					}
+					else if (msg.getContent().equals("getStatus"))
+					{
+						ACLMessage reply = msg.createReply();
+						reply.setPerformative(ACLMessage.INFORM);
+						
+						reply.setContent("S" + String.valueOf(isOn));
+						System.out.println(reply.getContent());
+						send(reply);
 					}
 				}
 				else
@@ -99,6 +108,8 @@ public class ApplianceAgent extends Agent {
 		}
 		);
 	}
+	
+	
 
 	// Method to register the service
 	void register( ServiceDescription sd)
