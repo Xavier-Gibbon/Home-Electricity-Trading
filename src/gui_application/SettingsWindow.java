@@ -414,7 +414,7 @@ public class SettingsWindow extends JFrame {
 		int rowCount = theTable.getRowCount();
 		for (int i = 0; i < rowCount; i++)
 		{
-			theAppliances.put((AID)theTable.getValueAt(i, 0), (Boolean)theTable.getValueAt(i, 1));
+			theAppliances.put((AID)theTable.getValueAt(i, 0), (Boolean)theTable.getValueAt(i, 2));
 		}
 		
 		theAgent.SetAppliancesStatus(theAppliances);

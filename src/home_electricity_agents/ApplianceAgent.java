@@ -99,7 +99,7 @@ public class ApplianceAgent extends Agent {
 						
 						reply.setContent("S" + String.valueOf(isOn));
 						System.out.println(reply.getContent());
-						send(reply);
+						//send(reply);
 					}
 				}
 				else

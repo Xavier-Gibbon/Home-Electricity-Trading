@@ -276,6 +276,8 @@ public class HomeAgent extends Agent {
 		
 		DFAgentDescription[] serviceAgents = getTarget("Appliance");
 		
+		msg.setContent("getStatus");
+		
 		for (DFAgentDescription serviceAgent : serviceAgents) { //For every agent that is type "Appliance"
 			theAgentsIDs.put(serviceAgent.getName(), true);
 			msg.addReceiver(serviceAgent.getName());
@@ -300,7 +302,11 @@ public class HomeAgent extends Agent {
 	{
 		Set<AID> theIDs = theAgents.keySet();
 		ACLMessage onMsg = new ACLMessage(ACLMessage.INFORM);
+		onMsg.setContent("on");
 		ACLMessage offMsg = new ACLMessage(ACLMessage.INFORM);
+		offMsg.setContent("off");
+		
+		
 		for (AID id : theIDs)
 		{
 			if (theAgents.get(id))
