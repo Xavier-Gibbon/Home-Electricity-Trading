@@ -26,6 +26,8 @@ import home_electricity_agents.HomeAgent;
 import jade.core.AID;
 import java.util.*;
 
+import jade.core.Runtime;
+
 public class SettingsWindow extends JFrame {
 
 	private JPanel contentPane;

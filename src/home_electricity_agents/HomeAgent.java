@@ -60,8 +60,8 @@ public class HomeAgent extends Agent {
 				MiddleMan.SendMessageToMenu("\n" + getLocalName() + ": Counter : " + getTickCount());
 				sendMessagesCost();
 
-				if (getTickCount() >= 5)
-					deactivateCounter();
+				//if (getTickCount() >= 5)
+					//deactivateCounter();
 			}
 			public int onEnd() {
 				MiddleMan.SendMessageToMenu(getLocalName() + ": Stop counting");
@@ -156,6 +156,11 @@ public class HomeAgent extends Agent {
 	public void deactivateCounter()// Stop the counter
 	{
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to stop counting");
+		int j = counter.getTickCount();
+		while (j == counter.getTickCount())
+		{
+			System.out.println(j);
+		}
 		counter.stop(); // stopping the ticker behaviour
 	}
 
@@ -169,71 +174,78 @@ public class HomeAgent extends Agent {
 				if (msg != null) //If the message is not null
 				{
 					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
-					Integer messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message this is to get the string from the first character onwards
-					switch (msg.getContent().charAt(0)) //Depending on what the first character is in the message it has a different meaning
-                    {
-                        case 'A': //From an appliance telling us its cost of electricity
-							applianceMessageCount--; //Tick down until we have had all appliances reply to us
-                            electricity += messageData;
-							if (applianceMessageCount <= 0) //If all appliances have replied to us then we can start buying electricity
-							{
-								MiddleMan.SendMessageToMenu("=======================BUYING ELECTRICITY====================");
-								MiddleMan.SendMessageToMenu(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
-								buySellElectricity();
-							}
-                            break;
-                        case 'S': //From an appliance telling us if its on or off. Used for the Settings window table filling
-                        	
-                        	break;
-						case 'I': //From a vendor telling us its initial offer price of electricity
-							initalVendorReplyCount--;//A vendor has replied
-							if (messageData < lowestVendorCost) //Use this to find the lowest cost vendor of the lot
-							{
-								lowestVendorCost = messageData; //Store their price
-								vendorName = msg.getSender(); //Store who they are
-							}
-							if (initalVendorReplyCount <= 0 ) //If all vendors have replied
-							{
-								if (lowestVendorCost > acceptableBuyMax) //If the lowest offer from the vendors is not smaller than our maximum buy price then we ask for a lower price from all vendors
+					try
+					{
+						Integer messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message this is to get the string from the first character onwards
+						switch (msg.getContent().charAt(0)) //Depending on what the first character is in the message it has a different meaning
+	                    {
+	                        case 'A': //From an appliance telling us its cost of electricity
+								applianceMessageCount--; //Tick down until we have had all appliances reply to us
+	                            electricity += messageData;
+								if (applianceMessageCount <= 0) //If all appliances have replied to us then we can start buying electricity
 								{
-									sendVendorMessage("L"); //Get lower price from everyone
+									MiddleMan.SendMessageToMenu("=======================BUYING ELECTRICITY====================");
+									MiddleMan.SendMessageToMenu(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
+									buySellElectricity();
 								}
-								else
+	                            break;
+	                        case 'S': //From an appliance telling us if its on or off. Used for the Settings window table filling
+	                        	
+	                        	break;
+							case 'I': //From a vendor telling us its initial offer price of electricity
+								initalVendorReplyCount--;//A vendor has replied
+								if (messageData < lowestVendorCost) //Use this to find the lowest cost vendor of the lot
 								{
-									chooseVendor();//If there is an acceptable price we will take that offer
+									lowestVendorCost = messageData; //Store their price
+									vendorName = msg.getSender(); //Store who they are
 								}
-							}
-							break;
-                        case 'R': //From a vendor bartering with us
-							ACLMessage reply = msg.createReply();
-							reply.setPerformative(ACLMessage.INFORM);
-							reply.setContent("L");
-							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
-							send(reply); //We send back a message instantly again until the vendor will not barter anymore, we are waiting for its final offer
-                            break;
-                        case 'F': //Final offer from a vendor
-							vendorReplyCount--; //A vendor has sent us its final offer, we need to get all of them before we can choose a vendor to buy from
-							if (messageData < lowestVendorCost) //Store the lowest cost and vendor
-							{
-								lowestVendorCost = messageData;
-								vendorName = msg.getSender();
-							}
-							if (vendorReplyCount <= 0 ) //If all vendors have replied to us we can then choose the vendor we need to buy from
-							{
-								chooseVendor(); //Choose the vendor
-								vendorReplyCount = 0; //Reset variable
-								initalVendorReplyCount = 0; //Reset variable
-								lowestVendorCost = 999; //Reset variable
-							}
-                            break;
-						case 'C': //Cost of the electricity from the vendor, think of this as the bill
-							MiddleMan.SendMessageToMenu("This weeks cost of electricity is " + messageData);
-							money -= messageData; //The cost of the electricity is taken out of our money
-							electricity = 0; //Our electricity has been reset back to 0 because we have sold/bought enough to make it 0
-							break;
-                        default:
-                            break;
-                    }
+								if (initalVendorReplyCount <= 0 ) //If all vendors have replied
+								{
+									if (lowestVendorCost > acceptableBuyMax) //If the lowest offer from the vendors is not smaller than our maximum buy price then we ask for a lower price from all vendors
+									{
+										sendVendorMessage("L"); //Get lower price from everyone
+									}
+									else
+									{
+										chooseVendor();//If there is an acceptable price we will take that offer
+									}
+								}
+								break;
+	                        case 'R': //From a vendor bartering with us
+								ACLMessage reply = msg.createReply();
+								reply.setPerformative(ACLMessage.INFORM);
+								reply.setContent("L");
+								MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+								send(reply); //We send back a message instantly again until the vendor will not barter anymore, we are waiting for its final offer
+	                            break;
+	                        case 'F': //Final offer from a vendor
+								vendorReplyCount--; //A vendor has sent us its final offer, we need to get all of them before we can choose a vendor to buy from
+								if (messageData < lowestVendorCost) //Store the lowest cost and vendor
+								{
+									lowestVendorCost = messageData;
+									vendorName = msg.getSender();
+								}
+								if (vendorReplyCount <= 0 ) //If all vendors have replied to us we can then choose the vendor we need to buy from
+								{
+									chooseVendor(); //Choose the vendor
+									vendorReplyCount = 0; //Reset variable
+									initalVendorReplyCount = 0; //Reset variable
+									lowestVendorCost = 999; //Reset variable
+								}
+	                            break;
+							case 'C': //Cost of the electricity from the vendor, think of this as the bill
+								MiddleMan.SendMessageToMenu("This weeks cost of electricity is " + messageData);
+								money -= messageData; //The cost of the electricity is taken out of our money
+								electricity = 0; //Our electricity has been reset back to 0 because we have sold/bought enough to make it 0
+								break;
+	                        default:
+	                            break;
+	                    }
+					}
+					catch (Exception e)
+					{
+						
+					}
 				}
 				else
 					block();
@@ -270,29 +282,22 @@ public class HomeAgent extends Agent {
 	//This gets the appliances ids and returns them with their on/off status
 	public Map<AID, Boolean> GetAppliances()
 	{
-		
 		Map<AID, Boolean> theAgentsIDs = new HashMap<AID, Boolean>();
+		
+		deactivateCounter();
+		
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		
 		DFAgentDescription[] serviceAgents = getTarget("Appliance");
 		
 		msg.setContent("getStatus");
 		
-		for (DFAgentDescription serviceAgent : serviceAgents) { //For every agent that is type "Appliance"
-			theAgentsIDs.put(serviceAgent.getName(), true);
-			msg.addReceiver(serviceAgent.getName());
+		for (int i = 0; i < serviceAgents.length; i++) { //For every agent that is type "Appliance"
+			theAgentsIDs.put(serviceAgents[i].getName(), true);
+			msg.addReceiver(serviceAgents[i].getName());
 		}
 		
-		Iterator receivers = msg.getAllIntendedReceiver();
-		
-		while(receivers.hasNext()) //Send message to all appliance agents
-		{
-			applianceStatusCount++;
-			receivers.next();
-		}
-		
-		send(msg);
-		
+		activateCounter();
 		
 		
 		return theAgentsIDs;
