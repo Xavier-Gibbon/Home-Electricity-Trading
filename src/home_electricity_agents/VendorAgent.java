@@ -88,7 +88,12 @@ public class VendorAgent extends Agent {
 							send(reply);
 							break;
 						case 'S': //Home needing to sell electricity
-
+							reply.setContent("G" + getBuyElectricity());//Reply with the cost of the electricity
+							Random sellRand = new Random();
+							barterTicks = sellRand.nextInt(5) + 1; //Used to decide how many ticks (1-5) this vendor will barter with the home for
+							currentBarterTick = 0;
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " +  msg.getSender().getLocalName());
+							send(reply);
 							break;
 						case 'L': //From a home asking for a lower price
 							if (currentBarterTick < barterTicks) //If the vendor agent is willing to barter any more
@@ -97,13 +102,13 @@ public class VendorAgent extends Agent {
 								switch (vendorType.charAt(0))
 								{
 									case 'A':
-										tempBarterPrice = getLinearPrice(); //The price of the electricity will fall in a linear pattern
+										tempBarterPrice = getLinearPrice(currentBarterTick, Integer.parseInt(sellMin), Integer.parseInt(sellElectricity)); //The price of the electricity will fall in a linear pattern
 										break;
 									case 'B':
-										tempBarterPrice = getParabolicPrice(); //The price of the electricity will fall in a upside down parabola pattern(Small early reduction in price, but later on the price decreases faster
+										tempBarterPrice = getParabolicPrice(currentBarterTick, Integer.parseInt(sellMin), Integer.parseInt(sellElectricity)); //The price of the electricity will fall in a upside down parabola pattern(Small early reduction in price, but later on the price decreases faster
 										break;
 									case 'C':
-										tempBarterPrice = getNegativeParabolicPrice();//The price of the electricity will fall in a sideways parabola pattern(Larger early price reduction, but later the price will not reduce much more
+										tempBarterPrice = getNegativeParabolicPrice(currentBarterTick, Integer.parseInt(sellMin), Integer.parseInt(sellElectricity)); //The price of the electricity will fall in a sideways parabola pattern(Larger early price reduction, but later the price will not reduce much more
 										break;
 									default:
 										break;
@@ -117,6 +122,40 @@ public class VendorAgent extends Agent {
 							else
 							{
 								reply.setContent("R" + Integer.toString(tempBarterPrice)); //Bartering can continue
+							}
+							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
+							send(reply);
+							break;
+						case 'N':
+							//System.out.println("current tick: " + currentBarterTick + " < barter ticks " + barterTicks);
+							if (currentBarterTick < barterTicks) //If the vendor agent is willing to barter any more
+							{
+								currentBarterTick++; //Tick down, this is to choose how many times the vendor will barter with the home agent (1-5) times
+								switch (vendorType.charAt(0))
+								{
+									case 'A':
+										tempBarterPrice = getLinearPrice(6 - currentBarterTick, Integer.parseInt(buyMin), Integer.parseInt(buyElectricity)); //The price of the electricity will fall in a linear pattern
+										break;
+									case 'B':
+										tempBarterPrice = getParabolicPrice(6 - currentBarterTick, Integer.parseInt(buyMin), Integer.parseInt(buyElectricity)); //The price of the electricity will fall in a upside down parabola pattern(Small early reduction in price, but later on the price decreases faster
+										break;
+									case 'C':
+										tempBarterPrice = getNegativeParabolicPrice(6 - currentBarterTick, Integer.parseInt(buyMin), Integer.parseInt(buyElectricity));//The price of the electricity will fall in a sideways parabola pattern(Larger early price reduction, but later the price will not reduce much more
+										break;
+									default:
+										break;
+								}
+							}
+							//System.out.println(tempBarterPrice);
+							if (currentBarterTick.equals(barterTicks)) //If the vendor is on its final offer
+							{
+								reply.setContent("P" + Integer.toString(tempBarterPrice)); //Final Offer
+								MiddleMan.SendMessageToMenu(":::::::::::::::::FINAL OFFER FROM " + getLocalName() + ":::::::::::::::::");
+							}
+							else
+							{
+								//System.out.println("PING");
+								reply.setContent("M" + Integer.toString(tempBarterPrice)); //Bartering can continue
 							}
 							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 							send(reply);
@@ -139,18 +178,21 @@ public class VendorAgent extends Agent {
 		});
 	}
 
-	private Integer getLinearPrice() //Linear path eg: y = -x + 100
+	private Integer getLinearPrice(int tick, int min, int max) //Linear path eg: y = -x + 100
 	{
-		return -((Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin))/5) * currentBarterTick + Integer.parseInt(sellElectricity);
+		return -((max - min)/5) * tick + max;
+		//return -((Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin))/5) * tick + Integer.parseInt(sellElectricity);
 	}
 
-	private Integer getParabolicPrice() //Slow start, late discounts eg: y = -x^2 + 100
+	private Integer getParabolicPrice(int tick, int min, int max) //Slow start, late discounts eg: y = -x^2 + 100
 	{
-		return (int)-(((Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin))/Math.pow(5,2)) * Math.pow(currentBarterTick,2)) + Integer.parseInt(sellElectricity);
+		return (int)-(((max - min)/Math.pow(5,2)) * Math.pow(tick,2)) + max;
+		//return (int)-(((Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin))/Math.pow(5,2)) * Math.pow(tick,2)) + Integer.parseInt(sellElectricity);
 	}
-	private Integer getNegativeParabolicPrice() //Early discounts slow later eg: y = (100/(x+4))+75
+	private Integer getNegativeParabolicPrice(int tick, int min, int max) //Early discounts slow later eg: y = (100/(x+4))+75
 	{
-		return (int)-(Math.sqrt((Math.pow(Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin),2)* currentBarterTick)/5)) + Integer.parseInt(sellElectricity);
+		return (int)-(Math.sqrt((Math.pow(max - min,2)* tick)/5)) + max;
+		//return (int)-(Math.sqrt((Math.pow(Integer.parseInt(sellElectricity) - Integer.parseInt(sellMin),2)* tick)/5)) + Integer.parseInt(sellElectricity);
 	}
 
 	private String getSellElectricity() //Get the initial price of electricity for this tick
