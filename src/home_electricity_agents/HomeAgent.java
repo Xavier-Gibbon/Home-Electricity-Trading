@@ -9,6 +9,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
 import java.util.Iterator;
+import java.util.*;
 
 import gui_application.MiddleMan;
 import gui_application.MainMenu;
@@ -30,18 +31,25 @@ public class HomeAgent extends Agent {
 	
 	//Knows the acceptable price range for buying and selling electricity
 	//This will be price per energy
-	private int acceptableBuyMax = 0;
-	private int acceptableBuyMin = 0;
+	public int acceptableBuyMax = 0;
+	public int acceptableBuyMin = 0;
+
+	public int acceptableSellMax = 0;
+	public int acceptableSellMin = 0;
 	
-	private int acceptableSellMax = 0;
-	private int acceptableSellMin = 50;
+	//Times are in seconds
+	public int timeBetweenTrade = 5000;
+	public int maxOffers = 5;
+	public int timeBeforeRejection = 10;
+	public boolean doesAutomaticTrade = true;
 
 	private TickerBehaviour counter;
+	private CyclicBehaviour reply;
 
 	public void activateCounter() //Activate counter, on each tick of the counter the home will send a message to all of the appliances
 	{
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to start counting");
-		counter = new TickerBehaviour(this, 500) {
+		counter = new TickerBehaviour(this, timeBetweenTrade) {
 			public void onStart()
 			{
 				super.onStart();
@@ -50,11 +58,10 @@ public class HomeAgent extends Agent {
 			@Override
 			protected void onTick()
 			{
-				MiddleMan.SendMessageToMenu("\n" + getLocalName() + ": Counter : " + getTickCount());
 				sendMessagesCost();
 
-				if (getTickCount() >= 5)
-					deactivateCounter();
+				//if (getTickCount() >= 5)
+					//deactivateCounter();
 			}
 			public int onEnd() {
 				MiddleMan.SendMessageToMenu(getLocalName() + ": Stop counting");
@@ -150,11 +157,12 @@ public class HomeAgent extends Agent {
 	{
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to stop counting");
 		counter.stop(); // stopping the ticker behaviour
+		this.removeBehaviour(counter);
 	}
 
 	public void getReply() //Wait for replies from the vendors/appliances
 	{
-		addBehaviour(new CyclicBehaviour(this) {
+		reply = new CyclicBehaviour(this) {
 			@Override
 			public void action() {
 				//Receive the other agents message
@@ -162,6 +170,7 @@ public class HomeAgent extends Agent {
 				if (msg != null) //If the message is not null
 				{
 					MiddleMan.SendMessageToMenu(getLocalName()+ ": Received message " + msg.getContent() + " from " + msg.getSender().getLocalName());
+
 					Integer messageData  = Integer.parseInt(msg.getContent().substring(1)); //Get the data from the message this is to get the string from the first character onwards
 					switch (msg.getContent().charAt(0)) //Depending on what the first character is in the message it has a different meaning
                     {
@@ -194,11 +203,15 @@ public class HomeAgent extends Agent {
 							{
 								if (lowestVendorCost > acceptableBuyMax) //If the lowest offer from the vendors is not smaller than our maximum buy price then we ask for a lower price from all vendors
 								{
-									sendVendorMessage("L"); //Get lower price from everyone
+									lowestVendorCost = messageData;
+									vendorName = msg.getSender();
 								}
-								else
+								if (vendorReplyCount <= 0 ) //If all vendors have replied to us we can then choose the vendor we need to buy from
 								{
-									chooseVendor();//If there is an acceptable price we will take that offer
+									chooseVendor(); //Choose the vendor
+									vendorReplyCount = 0; //Reset variable
+									initalVendorReplyCount = 0; //Reset variable
+									lowestVendorCost = 999; //Reset variable
 								}
 							}
 							break;
@@ -284,9 +297,13 @@ public class HomeAgent extends Agent {
                     }
 				}
 				else
+        {
 					block();
+				}
 			}
-		});
+		};
+		
+		this.addBehaviour(reply);
 	}
 
 	private void chooseVendor() //If we have an acceptable price we will choose the vendor we need to buy from
@@ -314,12 +331,62 @@ public class HomeAgent extends Agent {
 			sendVendorMessage("B");
 		}
 	}
+	
+	//This gets the appliances ids and returns them with their on/off status
+	public Map<AID, Boolean> GetAppliances()
+	{
+		Map<AID, Boolean> theAgentsIDs = new HashMap<AID, Boolean>();
+		
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		
+		deactivateCounter();
+		this.removeBehaviour(reply);
+		
+		DFAgentDescription[] serviceAgents = getTarget("Appliance");
+		
+		msg.setContent("getStatus");
+		
+		for (int i = 0; i < serviceAgents.length; i++) { //For every agent that is type "Appliance"
+			theAgentsIDs.put(serviceAgents[i].getName(), true);
+			msg.addReceiver(serviceAgents[i].getName());
+		}		
+		
+		this.addBehaviour(reply);
+		
+		return theAgentsIDs;
+	}
+	
+	public void SetAppliancesStatus(Map<AID, Boolean> theAgents)
+	{
+		Set<AID> theIDs = theAgents.keySet();
+		ACLMessage onMsg = new ACLMessage(ACLMessage.INFORM);
+		onMsg.setContent("on");
+		ACLMessage offMsg = new ACLMessage(ACLMessage.INFORM);
+		offMsg.setContent("off");
+		
+		
+		for (AID id : theIDs)
+		{
+			if (theAgents.get(id))
+			{
+				onMsg.addReceiver(id);
+			}
+			else
+			{
+				offMsg.addReceiver(id);
+			}
+		}
+		
+		send(onMsg);
+		send(offMsg);
+	}
 
 	@Override
 	protected void setup() //Start the agent
 	{
 		MainMenu.main(null);
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been created");
+		MiddleMan.SetHomeAgent(this);
 		activateCounter();
 		getReply();
 	}

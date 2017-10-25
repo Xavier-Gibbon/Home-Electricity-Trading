@@ -21,6 +21,13 @@ import javax.swing.JCheckBox;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JScrollPane;
 
+import home_electricity_agents.HomeAgent;
+
+import jade.core.AID;
+import java.util.*;
+
+import jade.core.Runtime;
+
 public class SettingsWindow extends JFrame {
 
 	private JPanel contentPane;
@@ -33,11 +40,13 @@ public class SettingsWindow extends JFrame {
 	private JTextField txtTradingMinutes;
 	private JTextField txtMaxOffers;
 	private JTextField txtRejectionSeconds;
+	private JTextField txtTradingSeconds;
+	private JCheckBox chkAutomaticTrading;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	private static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -67,6 +76,7 @@ public class SettingsWindow extends JFrame {
 		JButton btnBack = new JButton("Back");
 		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				MiddleMan.GetHomeAgent().activateCounter();
 				dispose();
 			}
 		});
@@ -81,6 +91,11 @@ public class SettingsWindow extends JFrame {
 		
 		//Save button functionality
 		JButton btnSave = new JButton("Save");
+		btnSave.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				SaveForm();
+			}
+		});
 		btnSave.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		btnSave.setBounds(562, 309, 112, 47);
 		contentPane.add(btnSave);
@@ -156,7 +171,7 @@ public class SettingsWindow extends JFrame {
 		contentPane.add(lblTimeInterval);
 		
 		//Automatic trading checkbox settings
-		JCheckBox chkAutomaticTrading = new JCheckBox("Enable Automatic Trading");
+		chkAutomaticTrading = new JCheckBox("Enable Automatic Trading");
 		chkAutomaticTrading.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				//This makes the trading hours and minutes textboxes enabled or disabled
@@ -167,6 +182,9 @@ public class SettingsWindow extends JFrame {
 				
 				txtTradingMinutes.setEnabled(selected);
 				txtTradingMinutes.setEditable(selected);
+				
+				txtTradingSeconds.setEnabled(selected);
+				txtTradingSeconds.setEnabled(selected);
 			}
 		});
 		chkAutomaticTrading.setToolTipText("Check to enable the house to automatically buy and sell electricity");
@@ -184,22 +202,35 @@ public class SettingsWindow extends JFrame {
 		//Trading hours text box <-- Stores how many hours there will be in between the house automatically trading electricity
 		txtTradingHours = new JTextField();
 		txtTradingHours.setToolTipText("The number of hours before the house will automatically trade with vendors");
-		txtTradingHours.setBounds(272, 331, 86, 20);
+		txtTradingHours.setBounds(272, 331, 64, 20);
 		contentPane.add(txtTradingHours);
 		txtTradingHours.setColumns(10);
 		
 		//Trading minutes label
 		JLabel lblTradingMinutes = new JLabel("Minutes");
 		lblTradingMinutes.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblTradingMinutes.setBounds(403, 311, 56, 14);
+		lblTradingMinutes.setBounds(358, 309, 56, 14);
 		contentPane.add(lblTradingMinutes);
 		
 		//Trading minutes text box <-- Stores how many minutes there will be in between the house automatically trading electricity
 		txtTradingMinutes = new JTextField();
 		txtTradingMinutes.setToolTipText("The number of minutes before the house will automatically trade with vendors");
-		txtTradingMinutes.setBounds(403, 331, 86, 20);
+		txtTradingMinutes.setBounds(346, 331, 64, 20);
 		contentPane.add(txtTradingMinutes);
 		txtTradingMinutes.setColumns(10);
+		
+		//Trading seconds label
+		JLabel lblTradingSeconds = new JLabel("Seconds");
+		lblTradingSeconds.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		lblTradingSeconds.setBounds(444, 309, 56, 14);
+		contentPane.add(lblTradingSeconds);
+		
+		//Trading seconds text box <-- Stores how many seconds there will be in between the house automatically trading electricity
+		txtTradingSeconds = new JTextField();
+		txtTradingSeconds.setToolTipText("The number of seconds before the house will automatically trade with vendors");
+		txtTradingSeconds.setColumns(10);
+		txtTradingSeconds.setBounds(443, 331, 64, 20);
+		contentPane.add(txtTradingSeconds);
 		
 		//Termination condition label
 		JLabel lblTerminationCondition = new JLabel("Termination Conditions");
@@ -249,23 +280,32 @@ public class SettingsWindow extends JFrame {
 		scrlPneApplianceList.setViewportView(tblApplianceList);
 		tblApplianceList.setModel(new DefaultTableModel(
 			new Object[][] {
-				{null, Boolean.TRUE},
 			},
 			new String[] {
-				"Appliance Name", "Enabled?"
+				"Appliance Object", "Appliance Name", "Enabled?"
 			}
 		) {
 			Class[] columnTypes = new Class[] {
-				String.class, Boolean.class
+				Object.class, String.class, Boolean.class
 			};
 			public Class getColumnClass(int columnIndex) {
 				return columnTypes[columnIndex];
 			}
+			boolean[] columnEditables = new boolean[] {
+				false, false, true
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
+			}
 		});
-		tblApplianceList.getColumnModel().getColumn(0).setPreferredWidth(92);
-		tblApplianceList.getColumnModel().getColumn(1).setPreferredWidth(65);
+		tblApplianceList.getColumnModel().getColumn(0).setResizable(false);
+		tblApplianceList.getColumnModel().getColumn(0).setPreferredWidth(15);
+		tblApplianceList.getColumnModel().getColumn(1).setPreferredWidth(92);
+		tblApplianceList.getColumnModel().getColumn(2).setPreferredWidth(65);
 		tblApplianceList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		
+		
+		//Dollar dollar bills yo
 		JLabel lblPerUnit = new JLabel("($ per unit)");
 		lblPerUnit.setFont(new Font("Tahoma", Font.BOLD, 12));
 		lblPerUnit.setBounds(377, 30, 72, 14);
@@ -295,5 +335,94 @@ public class SettingsWindow extends JFrame {
 		label_4.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		label_4.setBounds(389, 78, 14, 14);
 		contentPane.add(label_4);
+		
+		
+		this.FillForm();
+	}
+	
+	/*
+	 * Gets information from the home agent and fills the form with its info
+	 */
+	public void FillForm()
+	{
+		HomeAgent theAgent = MiddleMan.GetHomeAgent();
+		
+		txtMaxBuyRange.setText(Integer.toString(theAgent.acceptableBuyMax));
+		txtMinBuyRange.setText(Integer.toString(theAgent.acceptableBuyMin));
+		txtMaxSellRange.setText(Integer.toString(theAgent.acceptableSellMax));
+		txtMinSellRange.setText(Integer.toString(theAgent.acceptableSellMin));
+		
+		chkAutomaticTrading.setSelected(theAgent.doesAutomaticTrade);
+		int tradingSeconds = theAgent.timeBetweenTrade / 1000;
+		int tradingMinutes = 0;
+		int tradingHours = 0;
+		
+		if (tradingSeconds >= 60)
+		{
+			int i = tradingSeconds % 60;
+			tradingSeconds -= i;
+			tradingMinutes = tradingSeconds / 60;
+			tradingSeconds = i;
+			
+			if (tradingMinutes >= 60)
+			{
+				i = tradingMinutes % 60;
+				tradingMinutes -= i;
+				tradingHours = tradingMinutes / 60;
+				tradingMinutes = i;
+			}
+		}
+		
+		txtTradingSeconds.setText(Integer.toString(tradingSeconds));
+		txtTradingMinutes.setText(Integer.toString(tradingMinutes));
+		txtTradingHours.setText(Integer.toString(tradingHours));
+		
+		txtMaxOffers.setText(Integer.toString(theAgent.maxOffers));
+		txtRejectionSeconds.setText(Integer.toString(theAgent.timeBeforeRejection));
+		
+		Map<AID, Boolean> theAppliances = theAgent.GetAppliances();
+		
+		DefaultTableModel theTable = (DefaultTableModel)tblApplianceList.getModel();
+		Set<AID> theIDs = theAppliances.keySet();
+		for (AID id : theIDs)
+		{
+			theTable.addRow(new Object[] {
+					id,
+					id.getLocalName(),
+					theAppliances.get(id)
+			});
+		}		
+	}
+	
+	public void SaveForm()
+	{
+		HomeAgent theAgent = MiddleMan.GetHomeAgent();
+		
+		theAgent.acceptableBuyMax = Integer.parseInt(txtMaxBuyRange.getText());
+		theAgent.acceptableBuyMin = Integer.parseInt(txtMinBuyRange.getText());
+		theAgent.acceptableSellMax = Integer.parseInt(txtMaxSellRange.getText());
+		theAgent.acceptableSellMin = Integer.parseInt(txtMinSellRange.getText());
+		
+		theAgent.doesAutomaticTrade = chkAutomaticTrading.isSelected();
+		
+		int tradingSeconds = Integer.parseInt(txtTradingSeconds.getText()) + Integer.parseInt(txtTradingMinutes.getText()) * 60 + Integer.parseInt(txtTradingHours.getText()) * 3600;
+		
+		theAgent.timeBetweenTrade = tradingSeconds * 1000;
+		
+		theAgent.maxOffers = Integer.parseInt(txtMaxOffers.getText());
+		theAgent.timeBeforeRejection = Integer.parseInt(txtRejectionSeconds.getText());
+		
+		Map<AID, Boolean> theAppliances = new HashMap<AID, Boolean>();
+		DefaultTableModel theTable = (DefaultTableModel)tblApplianceList.getModel();
+		int rowCount = theTable.getRowCount();
+		for (int i = 0; i < rowCount; i++)
+		{
+			theAppliances.put((AID)theTable.getValueAt(i, 0), (Boolean)theTable.getValueAt(i, 2));
+		}
+		
+		theAgent.SetAppliancesStatus(theAppliances);
+		
 	}
 }
+
+
