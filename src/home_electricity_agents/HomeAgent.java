@@ -27,7 +27,6 @@ public class HomeAgent extends Agent {
 	private AID vendorName;
 	private int money = 50000;
 	private int applianceMessageCount = 0;
-	private int applianceStatusCount = 0;
 	
 	//Knows the acceptable price range for buying and selling electricity
 	//This will be price per energy
@@ -38,17 +37,20 @@ public class HomeAgent extends Agent {
 	public int acceptableSellMin = 0;
 	
 	//Times are in seconds
-	public int timeBetweenTrade = 500;
+	public int timeBetweenTrade = 5000;
 	public int maxOffers = 5;
 	public int timeBeforeRejection = 10;
 	public boolean doesAutomaticTrade = true;
+	
+	private boolean isTrading = false;
 
 	private TickerBehaviour counter;
+	private CyclicBehaviour reply;
 
 	public void activateCounter() //Activate counter, on each tick of the counter the home will send a message to all of the appliances
 	{
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to start counting");
-		counter = new TickerBehaviour(this, 500) {
+		counter = new TickerBehaviour(this, timeBetweenTrade) {
 			public void onStart()
 			{
 				super.onStart();
@@ -57,7 +59,6 @@ public class HomeAgent extends Agent {
 			@Override
 			protected void onTick()
 			{
-				MiddleMan.SendMessageToMenu("\n" + getLocalName() + ": Counter : " + getTickCount());
 				sendMessagesCost();
 
 				//if (getTickCount() >= 5)
@@ -156,19 +157,20 @@ public class HomeAgent extends Agent {
 	public void deactivateCounter()// Stop the counter
 	{
 		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to stop counting");
-		int j = counter.getTickCount();
-		while (j == counter.getTickCount())
+		while (isTrading)
 		{
-			System.out.println(j);
+			System.out.println(isTrading);
 		}
 		counter.stop(); // stopping the ticker behaviour
+		this.removeBehaviour(counter);
 	}
 
 	public void getReply() //Wait for replies from the vendors/appliances
 	{
-		addBehaviour(new CyclicBehaviour(this) {
+		reply = new CyclicBehaviour(this) {
 			@Override
 			public void action() {
+				isTrading = true;
 				//Receive the other agents message
 				ACLMessage msg=receive();
 				if (msg != null) //If the message is not null
@@ -188,10 +190,8 @@ public class HomeAgent extends Agent {
 									MiddleMan.SendMessageToMenu(getLocalName()+ ": I have to buy " + Integer.toString(electricity) + " electricity");
 									buySellElectricity();
 								}
+								isTrading = false;
 	                            break;
-	                        case 'S': //From an appliance telling us if its on or off. Used for the Settings window table filling
-	                        	
-	                        	break;
 							case 'I': //From a vendor telling us its initial offer price of electricity
 								initalVendorReplyCount--;//A vendor has replied
 								if (messageData < lowestVendorCost) //Use this to find the lowest cost vendor of the lot
@@ -210,6 +210,7 @@ public class HomeAgent extends Agent {
 										chooseVendor();//If there is an acceptable price we will take that offer
 									}
 								}
+								isTrading = false;
 								break;
 	                        case 'R': //From a vendor bartering with us
 								ACLMessage reply = msg.createReply();
@@ -217,6 +218,7 @@ public class HomeAgent extends Agent {
 								reply.setContent("L");
 								MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 								send(reply); //We send back a message instantly again until the vendor will not barter anymore, we are waiting for its final offer
+								isTrading = false;
 	                            break;
 	                        case 'F': //Final offer from a vendor
 								vendorReplyCount--; //A vendor has sent us its final offer, we need to get all of them before we can choose a vendor to buy from
@@ -232,13 +234,16 @@ public class HomeAgent extends Agent {
 									initalVendorReplyCount = 0; //Reset variable
 									lowestVendorCost = 999; //Reset variable
 								}
+								isTrading = false;
 	                            break;
 							case 'C': //Cost of the electricity from the vendor, think of this as the bill
 								MiddleMan.SendMessageToMenu("This weeks cost of electricity is " + messageData);
 								money -= messageData; //The cost of the electricity is taken out of our money
 								electricity = 0; //Our electricity has been reset back to 0 because we have sold/bought enough to make it 0
+								isTrading = false;
 								break;
 	                        default:
+	                        	isTrading = false;
 	                            break;
 	                    }
 					}
@@ -248,9 +253,15 @@ public class HomeAgent extends Agent {
 					}
 				}
 				else
+				{
+					isTrading = false;
 					block();
+				}
+				isTrading = false;
 			}
-		});
+		};
+		
+		this.addBehaviour(reply);
 	}
 
 	private void chooseVendor() //If we have an acceptable price we will choose the vendor we need to buy from
@@ -284,9 +295,10 @@ public class HomeAgent extends Agent {
 	{
 		Map<AID, Boolean> theAgentsIDs = new HashMap<AID, Boolean>();
 		
-		deactivateCounter();
-		
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		
+		deactivateCounter();
+		this.removeBehaviour(reply);
 		
 		DFAgentDescription[] serviceAgents = getTarget("Appliance");
 		
@@ -295,10 +307,9 @@ public class HomeAgent extends Agent {
 		for (int i = 0; i < serviceAgents.length; i++) { //For every agent that is type "Appliance"
 			theAgentsIDs.put(serviceAgents[i].getName(), true);
 			msg.addReceiver(serviceAgents[i].getName());
-		}
+		}		
 		
-		activateCounter();
-		
+		this.addBehaviour(reply);
 		
 		return theAgentsIDs;
 	}

@@ -76,6 +76,7 @@ public class SettingsWindow extends JFrame {
 		JButton btnBack = new JButton("Back");
 		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				MiddleMan.GetHomeAgent().activateCounter();
 				dispose();
 			}
 		});
@@ -352,7 +353,7 @@ public class SettingsWindow extends JFrame {
 		txtMinSellRange.setText(Integer.toString(theAgent.acceptableSellMin));
 		
 		chkAutomaticTrading.setSelected(theAgent.doesAutomaticTrade);
-		int tradingSeconds = theAgent.timeBetweenTrade;
+		int tradingSeconds = theAgent.timeBetweenTrade / 1000;
 		int tradingMinutes = 0;
 		int tradingHours = 0;
 		
@@ -406,7 +407,7 @@ public class SettingsWindow extends JFrame {
 		
 		int tradingSeconds = Integer.parseInt(txtTradingSeconds.getText()) + Integer.parseInt(txtTradingMinutes.getText()) * 60 + Integer.parseInt(txtTradingHours.getText()) * 3600;
 		
-		theAgent.timeBetweenTrade = tradingSeconds;
+		theAgent.timeBetweenTrade = tradingSeconds * 1000;
 		
 		theAgent.maxOffers = Integer.parseInt(txtMaxOffers.getText());
 		theAgent.timeBeforeRejection = Integer.parseInt(txtRejectionSeconds.getText());
@@ -420,7 +421,6 @@ public class SettingsWindow extends JFrame {
 		}
 		
 		theAgent.SetAppliancesStatus(theAppliances);
-		
 		
 	}
 }

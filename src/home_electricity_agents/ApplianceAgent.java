@@ -77,6 +77,10 @@ public class ApplianceAgent extends Agent {
 						}
 						else {
 							MiddleMan.SendMessageToMenu(getLocalName()+ " NOT sending cost: Appliance OFF");
+							ACLMessage reply = msg.createReply();
+							reply.setPerformative(ACLMessage.INFORM);
+							reply.setContent("A0");
+							send(reply);
 						}
 					}
 					else if (msg.getContent().equals("on"))
