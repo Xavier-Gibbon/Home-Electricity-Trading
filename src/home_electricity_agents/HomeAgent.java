@@ -17,9 +17,6 @@ import gui_application.MainMenu;
 public class HomeAgent extends Agent {
 	//Knows how much electricity it has
 	private int electricity = 0;
-	//Knows the range of which the agent wants to be in
-	private int maxElect = 0;
-	private int minElect = 0;
 
 	private int vendorReplyCount = 0;
 	private int initalVendorReplyCount = 0;
@@ -48,30 +45,37 @@ public class HomeAgent extends Agent {
 
 	public void activateCounter() //Activate counter, on each tick of the counter the home will send a message to all of the appliances
 	{
-		MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to start counting");
-		counter = new TickerBehaviour(this, timeBetweenTrade) {
-			public void onStart()
-			{
-				super.onStart();
-				MiddleMan.SendMessageToMenu(getLocalName()+ ": Start counting");
-			}
-			@Override
-			protected void onTick()
-			{
-				sendMessagesCost();
+		if (doesAutomaticTrade)
+		{
+			MiddleMan.SendMessageToMenu(getLocalName() + ": I have been asked to start counting");
+			counter = new TickerBehaviour(this, timeBetweenTrade) {
+				public void onStart()
+				{
+					super.onStart();
+					MiddleMan.SendMessageToMenu(getLocalName()+ ": Start counting");
+				}
+				@Override
+				protected void onTick()
+				{
+					sendMessagesCost();
 
-				//if (getTickCount() >= 5)
-					//deactivateCounter();
-			}
-			public int onEnd() {
-				MiddleMan.SendMessageToMenu(getLocalName() + ": Stop counting");
-				return super.onEnd();
-			}
-		};
-		addBehaviour(counter);
+					//if (getTickCount() >= 5)
+						//deactivateCounter();
+				}
+				public int onEnd() {
+					MiddleMan.SendMessageToMenu(getLocalName() + ": Stop counting");
+					return super.onEnd();
+				}
+			};
+			addBehaviour(counter);
+		}
+		else
+		{
+			MiddleMan.SendMessageToMenu("I am not doing automatic trade!");
+		}
 	}
 
-	private void sendMessagesCost() //Send the ping to the appliances, asking them for their cost
+	public void sendMessagesCost() //Send the ping to the appliances, asking them for their cost
 	{
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setContent("cost");		

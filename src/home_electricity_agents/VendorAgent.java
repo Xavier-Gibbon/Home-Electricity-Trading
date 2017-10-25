@@ -29,15 +29,6 @@ public class VendorAgent extends Agent {
 	private String vendorType;
 	private Integer tempBarterPrice;
 
-	//Knows the range that it will offer
-	//This will be price per energy
-	private int acceptableBuyMax = 0;
-	private int acceptableBuyMin = 0;
-	
-	private int acceptableSellMax = 0;
-	private int acceptableSellMin = 0;
-
-
 	void register( ServiceDescription sd)
 	{
 		DFAgentDescription dfd = new DFAgentDescription();
@@ -84,6 +75,7 @@ public class VendorAgent extends Agent {
 							Random barterRand = new Random();
 							barterTicks = barterRand.nextInt(5) + 1; //Used to decide how many ticks (1-5) this vendor will barter with the home for
 							currentBarterTick = 0;
+							tempBarterPrice = Integer.parseInt(buyMax);
 							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " +  msg.getSender().getLocalName());
 							send(reply);
 							break;
@@ -92,6 +84,7 @@ public class VendorAgent extends Agent {
 							Random sellRand = new Random();
 							barterTicks = sellRand.nextInt(5) + 1; //Used to decide how many ticks (1-5) this vendor will barter with the home for
 							currentBarterTick = 0;
+							tempBarterPrice = Integer.parseInt(sellMin);
 							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " +  msg.getSender().getLocalName());
 							send(reply);
 							break;
@@ -164,6 +157,7 @@ public class VendorAgent extends Agent {
 							messageData *= -1; //Make the electricity a positive number
 							electricity -= messageData;
 							money += messageData * tempBarterPrice; //Add the amount of money
+							
 							reply.setContent("C" + Integer.toString(messageData * tempBarterPrice));
 							MiddleMan.SendMessageToMenu("\t" + getLocalName() + ": Sending response " + reply.getContent() + " to " + msg.getSender().getLocalName());
 							send(reply); //Reply to the home agent with the total cost of the electricity

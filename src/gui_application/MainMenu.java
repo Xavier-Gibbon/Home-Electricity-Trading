@@ -87,16 +87,15 @@ public class MainMenu {
 		frame.getContentPane().add(btnSettings);
 		
 		//Buy button functionality
-		JButton btnBuy = new JButton("Buy");
-		btnBuy.setFont(new Font("Tahoma", Font.PLAIN, 18));
-		btnBuy.setBounds(73, 284, 130, 49);
-		frame.getContentPane().add(btnBuy);
-		
-		//Sell button functionality
-		JButton btnSell = new JButton("Sell");
-		btnSell.setFont(new Font("Tahoma", Font.PLAIN, 18));
-		btnSell.setBounds(277, 284, 130, 49);
-		frame.getContentPane().add(btnSell);
+		JButton btnTrade = new JButton("Trade!!!");
+		btnTrade.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				MiddleMan.GetHomeAgent().sendMessagesCost();
+			}
+		});
+		btnTrade.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		btnTrade.setBounds(73, 284, 366, 49);
+		frame.getContentPane().add(btnTrade);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(72, 98, 539, 151);
