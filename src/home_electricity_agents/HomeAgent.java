@@ -34,10 +34,8 @@ public class HomeAgent extends Agent {
 	public int acceptableSellMax = 0;
 	public int acceptableSellMin = 0;
 	
-	//Times are in seconds
+	//Times are in milliseconds
 	public int timeBetweenTrade = 5000;
-	public int maxOffers = 5;
-	public int timeBeforeRejection = 10;
 	public boolean doesAutomaticTrade = true;
 
 	private TickerBehaviour counter;
@@ -58,9 +56,6 @@ public class HomeAgent extends Agent {
 				protected void onTick()
 				{
 					sendMessagesCost();
-
-					//if (getTickCount() >= 5)
-						//deactivateCounter();
 				}
 				public int onEnd() {
 					MiddleMan.SendMessageToMenu(getLocalName() + ": Stop counting");
@@ -206,17 +201,13 @@ public class HomeAgent extends Agent {
 							if (initalVendorReplyCount <= 0 ) //If all vendors have replied
 							{
 								if (lowestVendorCost > acceptableBuyMax) //If the lowest offer from the vendors is not smaller than our maximum buy price then we ask for a lower price from all vendors
-								{
-									lowestVendorCost = messageData;
-									vendorName = msg.getSender();
-								}
-								if (vendorReplyCount <= 0 ) //If all vendors have replied to us we can then choose the vendor we need to buy from
-								{
-									chooseVendor(); //Choose the vendor
-									vendorReplyCount = 0; //Reset variable
-									initalVendorReplyCount = 0; //Reset variable
-									lowestVendorCost = 999; //Reset variable
-								}
+                                {
+                                    sendVendorMessage("L"); //Get lower price from everyone
+                                }
+                                else
+                                {
+                                    chooseVendor();//If there is an acceptable price we will take that offer
+                                }
 							}
 							break;
                         case 'R': //From a vendor bartering with us

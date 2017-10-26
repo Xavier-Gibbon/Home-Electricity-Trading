@@ -38,8 +38,6 @@ public class SettingsWindow extends JFrame {
 	private JTextField txtMaxSellRange;
 	private JTextField txtTradingHours;
 	private JTextField txtTradingMinutes;
-	private JTextField txtMaxOffers;
-	private JTextField txtRejectionSeconds;
 	private JTextField txtTradingSeconds;
 	private JCheckBox chkAutomaticTrading;
 
@@ -232,47 +230,9 @@ public class SettingsWindow extends JFrame {
 		txtTradingSeconds.setBounds(443, 331, 64, 20);
 		contentPane.add(txtTradingSeconds);
 		
-		//Termination condition label
-		JLabel lblTerminationCondition = new JLabel("Termination Conditions");
-		lblTerminationCondition.setFont(new Font("Tahoma", Font.BOLD, 16));
-		lblTerminationCondition.setBounds(10, 250, 198, 14);
-		contentPane.add(lblTerminationCondition);
-		
-		//Maximum number of offers label
-		JLabel lblMaxOffers = new JLabel("Maximum offers");
-		lblMaxOffers.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblMaxOffers.setBounds(10, 273, 127, 23);
-		contentPane.add(lblMaxOffers);
-		
-		//Maximum number of offers text box <-- stores how many offers a vendor can make before the house rejects their offers
-		txtMaxOffers = new JTextField();
-		txtMaxOffers.setToolTipText("How many times a vender can make an offer before the house rejects their offers completly");
-		txtMaxOffers.setBounds(122, 276, 86, 20);
-		contentPane.add(txtMaxOffers);
-		txtMaxOffers.setColumns(10);
-		
-		//Time before rejection label
-		JLabel lblOfferWaitInterval = new JLabel("Time before rejection");
-		lblOfferWaitInterval.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblOfferWaitInterval.setBounds(10, 307, 198, 14);
-		contentPane.add(lblOfferWaitInterval);
-		
-		//Time before rejection text box <-- stores the number of seconds the house will wait for a vendors offer before rejecting it
-		txtRejectionSeconds = new JTextField();
-		txtRejectionSeconds.setToolTipText("The number of seconds the house will wait for a vendors response before rejecting their offer.");
-		txtRejectionSeconds.setBounds(10, 334, 86, 20);
-		contentPane.add(txtRejectionSeconds);
-		txtRejectionSeconds.setColumns(10);
-		
-		//Seconds label
-		JLabel lblRejectionSeconds = new JLabel("Seconds");
-		lblRejectionSeconds.setFont(new Font("Tahoma", Font.PLAIN, 11));
-		lblRejectionSeconds.setBounds(106, 337, 86, 14);
-		contentPane.add(lblRejectionSeconds);
-		
 		//Appliance list, this list will store the appliances and whether or not they are enabled
 		JScrollPane scrlPneApplianceList = new JScrollPane();
-		scrlPneApplianceList.setBounds(20, 55, 181, 173);
+		scrlPneApplianceList.setBounds(20, 55, 181, 296);
 		contentPane.add(scrlPneApplianceList);
 		
 		tblApplianceList = new JTable();
@@ -377,9 +337,6 @@ public class SettingsWindow extends JFrame {
 		txtTradingMinutes.setText(Integer.toString(tradingMinutes));
 		txtTradingHours.setText(Integer.toString(tradingHours));
 		
-		txtMaxOffers.setText(Integer.toString(theAgent.maxOffers));
-		txtRejectionSeconds.setText(Integer.toString(theAgent.timeBeforeRejection));
-		
 		Map<AID, Boolean> theAppliances = theAgent.GetAppliances();
 		
 		DefaultTableModel theTable = (DefaultTableModel)tblApplianceList.getModel();
@@ -408,9 +365,6 @@ public class SettingsWindow extends JFrame {
 		int tradingSeconds = Integer.parseInt(txtTradingSeconds.getText()) + Integer.parseInt(txtTradingMinutes.getText()) * 60 + Integer.parseInt(txtTradingHours.getText()) * 3600;
 		
 		theAgent.timeBetweenTrade = tradingSeconds * 1000;
-		
-		theAgent.maxOffers = Integer.parseInt(txtMaxOffers.getText());
-		theAgent.timeBeforeRejection = Integer.parseInt(txtRejectionSeconds.getText());
 		
 		Map<AID, Boolean> theAppliances = new HashMap<AID, Boolean>();
 		DefaultTableModel theTable = (DefaultTableModel)tblApplianceList.getModel();
